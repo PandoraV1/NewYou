@@ -1,8 +1,3 @@
-/* While this template provides a good starting point for using Wear Compose, you can always
- * take a look at https://github.com/android/wear-os-samples/tree/main/ComposeStarter to find the
- * most up to date changes to the libraries and their usages.
- */
-
 package com.AidenLiriano.newyou.presentation
 
 import android.os.Bundle
@@ -25,6 +20,13 @@ import androidx.wear.compose.material.TimeText
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.AidenLiriano.newyou.R
 import com.AidenLiriano.newyou.presentation.theme.NewYouTheme
+import androidx.compose.runtime.rememberCoroutineScope // To run the message sending in background
+import androidx.compose.foundation.layout.Column // To stack text and button
+import androidx.wear.compose.material.Button // The button component
+import com.google.android.gms.wearable.Wearable // The Wearable API
+import kotlinx.coroutines.launch // To launch the scope
+import kotlinx.coroutines.tasks.await // To handle the API calls easily
+import androidx.compose.ui.platform.LocalContext // To get the context for the API
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,13 +37,13 @@ class MainActivity : ComponentActivity() {
         setTheme(android.R.style.Theme_DeviceDefault)
 
         setContent {
-            WearApp("Android")
+            WearApp()
         }
     }
 }
 
 @Composable
-fun WearApp(greetingName: String) {
+fun WearApp() {
     NewYouTheme {
         Box(
             modifier = Modifier
@@ -50,23 +52,61 @@ fun WearApp(greetingName: String) {
             contentAlignment = Alignment.Center
         ) {
             TimeText()
-            Greeting(greetingName = greetingName)
+            Greeting()
         }
     }
 }
 
 @Composable
-fun Greeting(greetingName: String) {
-    Text(
+fun Greeting() {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colors.primary,
-        text = stringResource(R.string.hello_world, greetingName)
-    )
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colors.primary,
+            text = "New You Watch"
+        )
+
+        // The Button
+        Button(
+            onClick = {
+                // Launch a coroutine to send the message without freezing the UI
+                coroutineScope.launch {
+                    try {
+                        val nodeClient = Wearable.getNodeClient(context)
+                        val messageClient = Wearable.getMessageClient(context)
+
+                        // Find connected nodes (the phone)
+                        val nodes = nodeClient.connectedNodes.await()
+
+                        for (node in nodes) {
+                            // Send the message
+                            messageClient.sendMessage(
+                                node.id,
+                                "/button_clicked",
+                                "Watch button was pressed!".toByteArray()
+                            ).await()
+                        }
+                    } catch (e: Exception) {
+                        // Handle errors (e.g., phone not connected)
+                        e.printStackTrace()
+                    }
+                }
+            }
+        ) {
+            Text("Ping Phone")
+        }
+    }
 }
 
 @Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    WearApp("Preview Android")
+    WearApp()
 }
