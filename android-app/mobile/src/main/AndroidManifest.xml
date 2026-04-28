@@ -21,7 +21,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Background listener service for receiving messages from the watch -->
         <service
             android:name=".PhoneListenerService"
             android:exported="true">
@@ -30,7 +29,7 @@
                 <data
                     android:scheme="wear"
                     android:host="*"
-                    android:pathPrefix="/workout/" />
+                    android:pathPrefix="/workout" />
             </intent-filter>
         </service>
 
