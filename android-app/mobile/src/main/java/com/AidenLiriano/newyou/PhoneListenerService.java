@@ -46,7 +46,7 @@ public class PhoneListenerService extends WearableListenerService {
 
                     Log.d(TAG, "Successfully saved workout type " + activityType);
 
-                    // Send the real activity ID back to the watch
+                    // Send real activity ID back to watch
                     Wearable.getMessageClient(getApplicationContext())
                             .sendMessage(
                                     sourceNodeId,
@@ -56,18 +56,37 @@ public class PhoneListenerService extends WearableListenerService {
                 });
 
             } catch (NumberFormatException e) {
-                Log.e(TAG, "Failed to parse activity type from path: " + path);
+                Log.e(TAG, "Failed to parse activity type: " + path);
             }
         }
 
         // --- Workout STOPPED ---
+        // Path: /workout_stop/type/activityId/duration/heartRate/calories
+        //       /steps/distanceKm/pace/speed/elevGain/elevLoss/hrStart/hrEnd/laps
         else if (path.startsWith("/workout_stop/")) {
             try {
-                String[] parts = path.replace("/workout_stop/", "").split("/");
-                int activityType = Integer.parseInt(parts[0]);
-                int activityId = Integer.parseInt(parts[1]);
-                long durationSeconds = Long.parseLong(parts[2]);
-                long endTime = System.currentTimeMillis();
+                String[] p = path.replace("/workout_stop/", "").split("/");
+                int activityType   = Integer.parseInt(p[0]);
+                int activityId     = Integer.parseInt(p[1]);
+                long duration      = Long.parseLong(p[2]);
+                int heartRate      = Integer.parseInt(p[3]);
+                int calories       = Integer.parseInt(p[4]);
+                int steps          = Integer.parseInt(p[5]);
+                float distanceKm   = Float.parseFloat(p[6]);
+                float pace         = Float.parseFloat(p[7]);
+                float speed        = Float.parseFloat(p[8]);
+                float elevGain     = Float.parseFloat(p[9]);
+                float elevLoss     = Float.parseFloat(p[10]);
+                int hrStart        = Integer.parseInt(p[11]);
+                int hrEnd          = Integer.parseInt(p[12]);
+                int laps           = Integer.parseInt(p[13]);
+                long endTime       = System.currentTimeMillis();
+
+                // Swimming pool length in meters (25m standard)
+                float poolLengthKm = 0.025f;
+                float swimDistance = laps * poolLengthKm;
+                float swimPace     = duration > 0 && swimDistance > 0
+                        ? (duration / 60f) / swimDistance : 0f;
 
                 databaseExecutor.execute(() -> {
                     AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
@@ -76,22 +95,51 @@ public class PhoneListenerService extends WearableListenerService {
                     dao.updateActivityEndTime(activityId, endTime);
 
                     switch (activityType) {
-                        case 1: dao.updateRunningDuration(activityId, durationSeconds); break;
-                        case 2: dao.updateSwimmingDuration(activityId, durationSeconds); break;
-                        case 3: dao.updateBikingDuration(activityId, durationSeconds); break;
-                        case 4: dao.updateWalkingDuration(activityId, durationSeconds); break;
-                        case 5: dao.updateHikingDuration(activityId, durationSeconds); break;
-                        case 6: dao.updateMeditationDuration(activityId, durationSeconds); break;
-                        case 7: dao.updateStrengthTrainingDuration(activityId, durationSeconds); break;
-                        case 8: dao.updateYogaDuration(activityId, durationSeconds); break;
-                        default: Log.w(TAG, "Unknown activity type: " + activityType); break;
+                        case 1: // Running
+                            dao.updateRunningData(activityId, duration, distanceKm,
+                                    pace, heartRate, calories, steps);
+                            break;
+                        case 2: // Swimming
+                            dao.updateSwimmingData(activityId, duration, laps,
+                                    swimDistance, swimPace, calories, heartRate);
+                            break;
+                        case 3: // Biking
+                            dao.updateBikingData(activityId, duration, distanceKm,
+                                    speed, heartRate, calories);
+                            break;
+                        case 4: // Walking
+                            dao.updateWalkingData(activityId, duration, distanceKm,
+                                    steps, pace, heartRate, calories);
+                            break;
+                        case 5: // Hiking
+                            dao.updateHikingData(activityId, duration, distanceKm,
+                                    elevGain, elevLoss, heartRate, calories, pace);
+                            break;
+                        case 6: // Meditation
+                            dao.updateMeditationData(activityId, duration,
+                                    heartRate, hrStart, hrEnd);
+                            break;
+                        case 7: // Strength Training
+                            dao.updateStrengthTrainingData(activityId, duration,
+                                    heartRate, calories);
+                            break;
+                        case 8: // Yoga
+                            dao.updateYogaData(activityId, duration, heartRate, calories);
+                            break;
+                        default:
+                            Log.w(TAG, "Unknown activity type: " + activityType);
+                            break;
                     }
 
-                    Log.d(TAG, "Updated activity ID: " + activityId + " duration: " + durationSeconds + "s");
+                    Log.d(TAG, "Updated activity ID: " + activityId
+                            + " type: " + activityType
+                            + " duration: " + duration
+                            + " HR: " + heartRate
+                            + " calories: " + calories);
                 });
 
             } catch (Exception e) {
-                Log.e(TAG, "Failed to parse workout stop message: " + path);
+                Log.e(TAG, "Failed to parse workout stop message: " + path, e);
             }
         }
     }
