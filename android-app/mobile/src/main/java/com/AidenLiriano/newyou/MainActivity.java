@@ -1,9 +1,10 @@
 package com.AidenLiriano.newyou;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -25,8 +26,8 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         statusTextView = findViewById(R.id.statusText);
         durationTextView = findViewById(R.id.durationText);
         readyTextView = findViewById(R.id.readyText);
+        Button historyButton = findViewById(R.id.historyButton);
 
-        // Hide duration and ready text until a workout ends
         if (durationTextView != null) durationTextView.setVisibility(android.view.View.GONE);
         if (readyTextView != null) readyTextView.setVisibility(android.view.View.GONE);
 
@@ -35,6 +36,11 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
             setContentView(statusTextView);
         }
         statusTextView.setText("Waiting for Watch...");
+
+        historyButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, WorkoutHistoryActivity.class);
+            startActivity(intent);
+        });
     }
 
     @Override
@@ -53,7 +59,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     public void onMessageReceived(@NonNull MessageEvent messageEvent) {
         String path = messageEvent.getPath();
 
-        // Workout started
         if (path.startsWith("/workout/")) {
             final String workoutName = new String(messageEvent.getData());
             runOnUiThread(() -> {
@@ -64,33 +69,36 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
             });
         }
 
-        // Workout stopped
         else if (path.startsWith("/workout_stop/")) {
             try {
                 String[] parts = path.replace("/workout_stop/", "").split("/");
                 long durationSeconds = Long.parseLong(parts[2]);
 
-                // Format duration as HH:MM:SS
                 long hours = durationSeconds / 3600;
                 long minutes = (durationSeconds % 3600) / 60;
                 long seconds = durationSeconds % 60;
-                String formattedDuration = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+
+                String formattedDuration;
+                if (hours > 0) {
+                    formattedDuration = hours + "h " + minutes + "m " + seconds + "s";
+                } else if (minutes > 0) {
+                    formattedDuration = minutes + "m " + seconds + "s";
+                } else {
+                    formattedDuration = seconds + "s";
+                }
 
                 final String workoutName = new String(messageEvent.getData());
 
                 runOnUiThread(() -> {
                     statusTextView.setText("Workout ended: " + workoutName);
-
                     if (durationTextView != null) {
                         durationTextView.setText("Duration: " + formattedDuration);
                         durationTextView.setVisibility(android.view.View.VISIBLE);
                     }
-
                     if (readyTextView != null) {
                         readyTextView.setText("Ready to start next workout");
                         readyTextView.setVisibility(android.view.View.VISIBLE);
                     }
-
                     Toast.makeText(MainActivity.this, "Workout Complete!", Toast.LENGTH_SHORT).show();
                 });
 

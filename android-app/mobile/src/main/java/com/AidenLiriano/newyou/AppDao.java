@@ -25,6 +25,9 @@ public interface AppDao {
     @Query("SELECT * FROM activities WHERE user_id = :userId ORDER BY start_time DESC")
     List<Activity> getActivitiesForUser(int userId);
 
+    @Query("DELETE FROM activities")
+    void clearAllActivities();
+
     // --- Running ---
     @Insert
     void insertRunningData(RunningData data);

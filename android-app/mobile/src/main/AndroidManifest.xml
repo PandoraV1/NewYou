@@ -21,6 +21,11 @@
             </intent-filter>
         </activity>
 
+        <!-- Workout history screen -->
+        <activity
+            android:name=".WorkoutHistoryActivity"
+            android:exported="false" />
+
         <service
             android:name=".PhoneListenerService"
             android:exported="true">
