@@ -1,6 +1,7 @@
 package com.AidenLiriano.newyou.presentation
 
 import android.Manifest
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -33,7 +34,6 @@ import kotlinx.coroutines.tasks.await
 class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListener {
 
     var pendingActivityId by mutableStateOf(-1)
-    lateinit var sensorHelper: SensorManagerHelper
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -44,7 +44,8 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
         super.onCreate(savedInstanceState)
         setTheme(android.R.style.Theme_DeviceDefault)
 
-        sensorHelper = SensorManagerHelper(this)
+        // Initialize sensor helper on the shared service reference
+        WorkoutTrackingService.sensorHelper = SensorManagerHelper(this)
 
         permissionLauncher.launch(
             arrayOf(
@@ -74,6 +75,20 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
             val realId = path.replace("/activity_id_response/", "").toIntOrNull()
             if (realId != null) pendingActivityId = realId
         }
+    }
+
+    // Start the foreground tracking service
+    fun startTrackingService() {
+        val intent = Intent(this, WorkoutTrackingService::class.java)
+        intent.action = WorkoutTrackingService.ACTION_START
+        startForegroundService(intent)
+    }
+
+    // Stop the foreground tracking service
+    fun stopTrackingService() {
+        val intent = Intent(this, WorkoutTrackingService::class.java)
+        intent.action = WorkoutTrackingService.ACTION_STOP
+        startService(intent)
     }
 }
 
@@ -188,12 +203,17 @@ fun WorkoutSelector(
 
                                 val realActivityId = activity.pendingActivityId
 
-                                activity.sensorHelper = SensorManagerHelper(context)
-                                activity.sensorHelper.startTracking(
+                                // Set up sensors on the shared helper
+                                WorkoutTrackingService.sensorHelper =
+                                    SensorManagerHelper(context)
+                                WorkoutTrackingService.sensorHelper?.startTracking(
                                     trackHeartRate = true,
                                     trackSteps = workout.typeId in listOf(1, 4, 5),
                                     trackElevation = workout.typeId == 5
                                 )
+
+                                // Start the foreground service to keep tracking alive
+                                activity.startTrackingService()
 
                                 onWorkoutStarted(workout, realActivityId)
 
@@ -239,23 +259,23 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    // Live update sender — sends stats to phone every 5 seconds
+    // Live update sender — every 5 seconds
     LaunchedEffect(isRunning) {
         while (isRunning) {
             delay(5000L)
             if (!isRunning) break
             try {
-                val sensorHelper = activity.sensorHelper
+                // Always read from the shared service sensor helper
+                val sensorHelper = WorkoutTrackingService.sensorHelper ?: return@LaunchedEffect
                 val met = metValues[workout.typeId] ?: 5.0f
-                val avgHR = sensorHelper.getAverageHeartRate()
-                val calories = sensorHelper.getCalories(met, elapsedSeconds)
-                val steps = sensorHelper.totalSteps
+                val avgHR      = sensorHelper.getAverageHeartRate()
+                val calories   = sensorHelper.getCalories(met, elapsedSeconds)
+                val steps      = sensorHelper.totalSteps
                 val distanceKm = sensorHelper.getDistanceKm()
-                val pace = sensorHelper.getPaceMinPerKm(elapsedSeconds)
-                val speed = sensorHelper.getSpeedKmh(elapsedSeconds)
-                val elevGain = sensorHelper.elevationGainMeters
+                val pace       = sensorHelper.getPaceMinPerKm(elapsedSeconds)
+                val speed      = sensorHelper.getSpeedKmh(elapsedSeconds)
+                val elevGain   = sensorHelper.elevationGainMeters
 
-                // Path: /workout_live/type/activityId/elapsed/hr/cal/steps/dist/pace/speed/elevGain/laps
                 val livePath = "/workout_live/" +
                         "${workout.typeId}/$activityId/$elapsedSeconds/" +
                         "$avgHR/$calories/$steps/" +
@@ -343,20 +363,24 @@ fun ActiveWorkoutScreen(
         Button(
             onClick = {
                 isRunning = false
-                activity.sensorHelper.stopTracking()
 
-                val sensorHelper = activity.sensorHelper
-                val met = metValues[workout.typeId] ?: 5.0f
-                val avgHR = sensorHelper.getAverageHeartRate()
-                val calories = sensorHelper.getCalories(met, elapsedSeconds)
-                val steps = sensorHelper.totalSteps
-                val distanceKm = sensorHelper.getDistanceKm()
-                val pace = sensorHelper.getPaceMinPerKm(elapsedSeconds)
-                val speed = sensorHelper.getSpeedKmh(elapsedSeconds)
-                val elevGain = sensorHelper.elevationGainMeters
-                val elevLoss = sensorHelper.elevationLossMeters
-                val hrStart = sensorHelper.getStartHeartRate()
-                val hrEnd = sensorHelper.getEndHeartRate()
+                // Stop the foreground service and sensors
+                activity.stopTrackingService()
+
+                val sensorHelper = WorkoutTrackingService.sensorHelper
+                sensorHelper?.stopTracking()
+
+                val met        = metValues[workout.typeId] ?: 5.0f
+                val avgHR      = sensorHelper?.getAverageHeartRate() ?: 0
+                val calories   = sensorHelper?.getCalories(met, elapsedSeconds) ?: 0
+                val steps      = sensorHelper?.totalSteps ?: 0
+                val distanceKm = sensorHelper?.getDistanceKm() ?: 0f
+                val pace       = sensorHelper?.getPaceMinPerKm(elapsedSeconds) ?: 0f
+                val speed      = sensorHelper?.getSpeedKmh(elapsedSeconds) ?: 0f
+                val elevGain   = sensorHelper?.elevationGainMeters ?: 0f
+                val elevLoss   = sensorHelper?.elevationLossMeters ?: 0f
+                val hrStart    = sensorHelper?.getStartHeartRate() ?: 0
+                val hrEnd      = sensorHelper?.getEndHeartRate() ?: 0
 
                 val stopPath = "/workout_stop/" +
                         "${workout.typeId}/$activityId/$elapsedSeconds/" +
