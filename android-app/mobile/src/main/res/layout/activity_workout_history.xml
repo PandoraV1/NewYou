@@ -15,13 +15,6 @@
         android:background="#FFFFFF"
         android:elevation="4dp">
 
-        <Button
-            android:id="@+id/backButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="← Back"
-            android:textSize="14sp" />
-
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -41,10 +34,26 @@
 
     </LinearLayout>
 
-    <!-- Scrollable list of workouts -->
+    <!-- Search box -->
+    <EditText
+        android:id="@+id/searchBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="4dp"
+        android:hint="Search by activity or date (e.g. Running, Apr 30, 4/30)"
+        android:textSize="14sp"
+        android:inputType="text"
+        android:background="@android:drawable/edit_text"
+        android:padding="10dp" />
+
+    <!-- Scrollable list -->
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:id="@+id/historyContainer"
@@ -54,5 +63,8 @@
             android:padding="8dp" />
 
     </ScrollView>
+
+    <!-- Nav bar at bottom -->
+    <include layout="@layout/nav_bar" />
 
 </LinearLayout>

@@ -5,7 +5,6 @@ import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
-import androidx.room.RoomDatabase.Callback;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import java.util.concurrent.Executors;
 
@@ -22,7 +21,7 @@ import java.util.concurrent.Executors;
                 StrengthTrainingData.class,
                 YogaData.class
         },
-        version = 2
+        version = 3
 )
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -42,9 +41,11 @@ public abstract class AppDatabase extends RoomDatabase {
                                 @Override
                                 public void onCreate(@NonNull SupportSQLiteDatabase db) {
                                     super.onCreate(db);
-                                    // Insert a default placeholder user when DB is first created
                                     Executors.newSingleThreadExecutor().execute(() -> {
-                                        User defaultUser = new User("Default User", 0, 0, 0);
+                                        // Default placeholder user — 5'9", 154 lbs (70kg)
+                                        User defaultUser = new User(
+                                                "Your Name", 25, 69, 154f, "Not set"
+                                        );
                                         INSTANCE.appDao().insertUser(defaultUser);
                                     });
                                 }

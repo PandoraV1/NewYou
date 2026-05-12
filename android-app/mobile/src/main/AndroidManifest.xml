@@ -13,6 +13,10 @@
         android:theme="@style/Theme.NewYou">
 
         <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
@@ -21,10 +25,15 @@
             </intent-filter>
         </activity>
 
-        <!-- Workout history screen -->
         <activity
             android:name=".WorkoutHistoryActivity"
             android:exported="false" />
+
+        <!-- Live workout screen -->
+        <activity
+            android:name=".LiveWorkoutActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
 
         <service
             android:name=".PhoneListenerService"

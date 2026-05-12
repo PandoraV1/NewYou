@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1A1A2E">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
+
+        <!-- Workout name -->
+        <TextView
+            android:id="@+id/liveWorkoutName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Workout"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Waiting message shown before first update arrives -->
+        <TextView
+            android:id="@+id/liveWaiting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Waiting for first update..."
+            android:textSize="13sp"
+            android:textColor="#AAAAAA"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Timer -->
+        <TextView
+            android:id="@+id/liveTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00:00"
+            android:textSize="52sp"
+            android:textStyle="bold"
+            android:textColor="#4FC3F7"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Heart Rate -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="❤️ Heart Rate"
+                android:textSize="15sp"
+                android:textColor="#AAAAAA" />
+            <TextView
+                android:id="@+id/liveHeartRate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- bpm"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#EF5350" />
+        </LinearLayout>
+
+        <!-- Calories -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔥 Calories"
+                android:textSize="15sp"
+                android:textColor="#AAAAAA" />
+            <TextView
+                android:id="@+id/liveCalories"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- kcal"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFA726" />
+        </LinearLayout>
+
+        <!-- Steps -->
+        <LinearLayout
+            android:id="@+id/labelSteps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="👟 Steps"
+                android:textSize="15sp"
+                android:textColor="#AAAAAA" />
+            <TextView
+                android:id="@+id/liveSteps"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- Distance -->
+        <LinearLayout
+            android:id="@+id/labelDistance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="📍 Distance"
+                android:textSize="15sp"
+                android:textColor="#AAAAAA" />
+            <TextView
+                android:id="@+id/liveDistance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- km"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- Pace -->
+        <LinearLayout
+            android:id="@+id/labelPace"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⏱️ Pace"
+                android:textSize="15sp"
+                android:textColor="#AAAAAA" />
+            <TextView
+                android:id="@+id/livePace"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--:-- /km"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- Speed -->
+        <LinearLayout
+            android:id="@+id/labelSpeed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🚴 Speed"
+                android:textSize="15sp"
+                android:textColor="#AAAAAA" />
+            <TextView
+                android:id="@+id/liveSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- km/h"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- Elevation -->
+        <LinearLayout
+            android:id="@+id/labelElevation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⛰️ Elevation Gain"
+                android:textSize="15sp"
+                android:textColor="#AAAAAA" />
+            <TextView
+                android:id="@+id/liveElevation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- m"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- Laps -->
+        <LinearLayout
+            android:id="@+id/labelLaps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🏊 Laps"
+                android:textSize="15sp"
+                android:textColor="#AAAAAA" />
+            <TextView
+                android:id="@+id/liveLaps"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

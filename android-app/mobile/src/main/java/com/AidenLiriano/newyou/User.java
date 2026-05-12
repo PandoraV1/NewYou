@@ -17,16 +17,22 @@ public class User {
     @ColumnInfo(name = "age")
     public int age;
 
-    @ColumnInfo(name = "height")
-    public float height;
+    // Height stored in total inches internally
+    @ColumnInfo(name = "height_inches")
+    public int heightInches;
 
-    @ColumnInfo(name = "weight")
-    public float weight;
+    // Weight stored in lbs internally
+    @ColumnInfo(name = "weight_lbs")
+    public float weightLbs;
 
-    public User(String name, int age, float height, float weight) {
+    @ColumnInfo(name = "gender")
+    public String gender;
+
+    public User(String name, int age, int heightInches, float weightLbs, String gender) {
         this.name = name;
         this.age = age;
-        this.height = height;
-        this.weight = weight;
+        this.heightInches = heightInches;
+        this.weightLbs = weightLbs;
+        this.gender = gender;
     }
 }

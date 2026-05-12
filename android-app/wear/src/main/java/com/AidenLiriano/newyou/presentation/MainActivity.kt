@@ -1,12 +1,10 @@
 package com.AidenLiriano.newyou.presentation
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,10 +35,9 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
     var pendingActivityId by mutableStateOf(-1)
     lateinit var sensorHelper: SensorManagerHelper
 
-    // Permission launcher for body sensors
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* permissions handled at runtime */ }
+    ) {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -49,7 +46,6 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
 
         sensorHelper = SensorManagerHelper(this)
 
-        // Request permissions on launch
         permissionLauncher.launch(
             arrayOf(
                 Manifest.permission.BODY_SENSORS,
@@ -76,9 +72,7 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
         val path = messageEvent.path
         if (path.startsWith("/activity_id_response/")) {
             val realId = path.replace("/activity_id_response/", "").toIntOrNull()
-            if (realId != null) {
-                pendingActivityId = realId
-            }
+            if (realId != null) pendingActivityId = realId
         }
     }
 }
@@ -96,16 +90,9 @@ val workouts = listOf(
     WorkoutType("Yoga",       8, R.drawable.ic_yoga)
 )
 
-// MET values for each workout type
 val metValues = mapOf(
-    1 to 9.8f,  // Running
-    2 to 6.0f,  // Swimming
-    3 to 7.5f,  // Biking
-    4 to 3.5f,  // Walking
-    5 to 6.0f,  // Hiking
-    6 to 2.5f,  // Meditation
-    7 to 5.0f,  // Strength Training
-    8 to 3.0f   // Yoga
+    1 to 9.8f, 2 to 6.0f, 3 to 7.5f, 4 to 3.5f,
+    5 to 6.0f, 6 to 2.5f, 7 to 5.0f, 8 to 3.0f
 )
 
 sealed class Screen {
@@ -201,12 +188,11 @@ fun WorkoutSelector(
 
                                 val realActivityId = activity.pendingActivityId
 
-                                // Start sensor tracking for this workout
                                 activity.sensorHelper = SensorManagerHelper(context)
                                 activity.sensorHelper.startTracking(
                                     trackHeartRate = true,
-                                    trackSteps = workout.typeId in listOf(1, 4, 5), // Running, Walking, Hiking
-                                    trackElevation = workout.typeId == 5 // Hiking only
+                                    trackSteps = workout.typeId in listOf(1, 4, 5),
+                                    trackElevation = workout.typeId == 5
                                 )
 
                                 onWorkoutStarted(workout, realActivityId)
@@ -245,10 +231,50 @@ fun ActiveWorkoutScreen(
     var isRunning by remember { mutableStateOf(true) }
     var lapCount by remember { mutableStateOf(0) }
 
+    // Main timer
     LaunchedEffect(isRunning) {
         while (isRunning) {
             delay(1000L)
             elapsedSeconds++
+        }
+    }
+
+    // Live update sender — sends stats to phone every 5 seconds
+    LaunchedEffect(isRunning) {
+        while (isRunning) {
+            delay(5000L)
+            if (!isRunning) break
+            try {
+                val sensorHelper = activity.sensorHelper
+                val met = metValues[workout.typeId] ?: 5.0f
+                val avgHR = sensorHelper.getAverageHeartRate()
+                val calories = sensorHelper.getCalories(met, elapsedSeconds)
+                val steps = sensorHelper.totalSteps
+                val distanceKm = sensorHelper.getDistanceKm()
+                val pace = sensorHelper.getPaceMinPerKm(elapsedSeconds)
+                val speed = sensorHelper.getSpeedKmh(elapsedSeconds)
+                val elevGain = sensorHelper.elevationGainMeters
+
+                // Path: /workout_live/type/activityId/elapsed/hr/cal/steps/dist/pace/speed/elevGain/laps
+                val livePath = "/workout_live/" +
+                        "${workout.typeId}/$activityId/$elapsedSeconds/" +
+                        "$avgHR/$calories/$steps/" +
+                        "$distanceKm/$pace/$speed/$elevGain/$lapCount"
+
+                val nodeClient = Wearable.getNodeClient(context)
+                val messageClient = Wearable.getMessageClient(context)
+                val nodes = nodeClient.connectedNodes.await()
+
+                for (node in nodes) {
+                    messageClient.sendMessage(
+                        node.id,
+                        livePath,
+                        workout.name.toByteArray()
+                    ).await()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -264,14 +290,10 @@ fun ActiveWorkoutScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Workout image in circle bubble
         Box(
             modifier = Modifier
                 .size(60.dp)
-                .background(
-                    color = MaterialTheme.colors.primary,
-                    shape = CircleShape
-                ),
+                .background(color = MaterialTheme.colors.primary, shape = CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Image(
@@ -299,7 +321,6 @@ fun ActiveWorkoutScreen(
             textAlign = TextAlign.Center
         )
 
-        // Lap counter button for swimming only
         if (workout.typeId == 2) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -311,9 +332,7 @@ fun ActiveWorkoutScreen(
             Spacer(modifier = Modifier.height(4.dp))
             Button(
                 onClick = { lapCount++ },
-                modifier = Modifier
-                    .width(80.dp)
-                    .height(30.dp)
+                modifier = Modifier.width(80.dp).height(30.dp)
             ) {
                 Text(text = "+ Lap", fontSize = 11.sp)
             }
@@ -321,7 +340,6 @@ fun ActiveWorkoutScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Stop button
         Button(
             onClick = {
                 isRunning = false
@@ -329,7 +347,7 @@ fun ActiveWorkoutScreen(
 
                 val sensorHelper = activity.sensorHelper
                 val met = metValues[workout.typeId] ?: 5.0f
-                val avgHeartRate = sensorHelper.getAverageHeartRate()
+                val avgHR = sensorHelper.getAverageHeartRate()
                 val calories = sensorHelper.getCalories(met, elapsedSeconds)
                 val steps = sensorHelper.totalSteps
                 val distanceKm = sensorHelper.getDistanceKm()
@@ -340,12 +358,9 @@ fun ActiveWorkoutScreen(
                 val hrStart = sensorHelper.getStartHeartRate()
                 val hrEnd = sensorHelper.getEndHeartRate()
 
-                // Build the stop message path with all sensor data
-                // Format: /workout_stop/type/activityId/duration/heartRate/calories
-                //         /steps/distanceKm/pace/speed/elevGain/elevLoss/hrStart/hrEnd/laps
                 val stopPath = "/workout_stop/" +
                         "${workout.typeId}/$activityId/$elapsedSeconds/" +
-                        "$avgHeartRate/$calories/$steps/" +
+                        "$avgHR/$calories/$steps/" +
                         "$distanceKm/$pace/$speed/" +
                         "$elevGain/$elevLoss/$hrStart/$hrEnd/$lapCount"
 
@@ -369,9 +384,7 @@ fun ActiveWorkoutScreen(
                     }
                 }
             },
-            modifier = Modifier
-                .width(90.dp)
-                .height(36.dp)
+            modifier = Modifier.width(90.dp).height(36.dp)
         ) {
             Text(text = "Stop", fontSize = 12.sp)
         }
