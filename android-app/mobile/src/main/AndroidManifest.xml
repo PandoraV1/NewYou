@@ -12,13 +12,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NewYou">
 
+        <!-- Splash is now the entry point -->
         <activity
-            android:name=".SettingsActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.NewYou">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -26,14 +24,33 @@
         </activity>
 
         <activity
+            android:name=".LoginActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".WorkoutHistoryActivity"
             android:exported="false" />
 
-        <!-- Live workout screen -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".RecommendationsActivity"
+            android:exported="false" />
+
         <activity
             android:name=".LiveWorkoutActivity"
             android:exported="false"
             android:launchMode="singleTop" />
+
+        <activity
+            android:name=".HealthPredictionsActivity"
+            android:exported="false" />
 
         <service
             android:name=".PhoneListenerService"

@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F0F0">
+    android:background="#E5E0AA">
 
-    <!-- Top bar -->
+    <!-- Fixed top bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:background="#98CD00"
         android:padding="16dp"
-        android:background="#FFFFFF"
-        android:elevation="4dp">
+        android:elevation="6dp"
+        android:gravity="center_vertical">
 
         <TextView
             android:layout_width="0dp"
@@ -22,15 +24,16 @@
             android:text="Profile &amp; Settings"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="#1A1A2E"
-            android:layout_gravity="center_vertical" />
+            android:textColor="#1C1C1E" />
 
         <Button
             android:id="@+id/editButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Edit"
-            android:textSize="14sp" />
+            android:textSize="13sp"
+            android:textColor="#1C1C1E"
+            android:backgroundTint="#B6F500" />
 
     </LinearLayout>
 
@@ -47,13 +50,12 @@
 
             <!-- Profile Card -->
             <androidx.cardview.widget.CardView
-                xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="#FFFADC">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -67,16 +69,15 @@
                         android:text="Personal Information"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#1A1A2E"
+                        android:textColor="#1C1C1E"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Name -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Name"
                         android:textSize="12sp"
-                        android:textColor="#888888"
+                        android:textColor="#666666"
                         android:layout_marginBottom="2dp" />
 
                     <TextView
@@ -85,7 +86,7 @@
                         android:layout_height="wrap_content"
                         android:text="--"
                         android:textSize="16sp"
-                        android:textColor="#1A1A2E"
+                        android:textColor="#1C1C1E"
                         android:layout_marginBottom="12dp" />
 
                     <EditText
@@ -95,16 +96,16 @@
                         android:hint="Enter your name"
                         android:inputType="textPersonName"
                         android:textSize="16sp"
+                        android:textColor="#1C1C1E"
                         android:visibility="gone"
                         android:layout_marginBottom="12dp" />
 
-                    <!-- Age -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Age"
                         android:textSize="12sp"
-                        android:textColor="#888888"
+                        android:textColor="#666666"
                         android:layout_marginBottom="2dp" />
 
                     <TextView
@@ -113,7 +114,7 @@
                         android:layout_height="wrap_content"
                         android:text="--"
                         android:textSize="16sp"
-                        android:textColor="#1A1A2E"
+                        android:textColor="#1C1C1E"
                         android:layout_marginBottom="12dp" />
 
                     <EditText
@@ -123,16 +124,16 @@
                         android:hint="Enter your age"
                         android:inputType="number"
                         android:textSize="16sp"
+                        android:textColor="#1C1C1E"
                         android:visibility="gone"
                         android:layout_marginBottom="12dp" />
 
-                    <!-- Height -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Height"
                         android:textSize="12sp"
-                        android:textColor="#888888"
+                        android:textColor="#666666"
                         android:layout_marginBottom="2dp" />
 
                     <TextView
@@ -141,10 +142,9 @@
                         android:layout_height="wrap_content"
                         android:text="--"
                         android:textSize="16sp"
-                        android:textColor="#1A1A2E"
+                        android:textColor="#1C1C1E"
                         android:layout_marginBottom="12dp" />
 
-                    <!-- Height edit fields side by side -->
                     <LinearLayout
                         android:id="@+id/editHeightContainer"
                         android:layout_width="match_parent"
@@ -161,6 +161,7 @@
                             android:hint="Feet"
                             android:inputType="number"
                             android:textSize="16sp"
+                            android:textColor="#1C1C1E"
                             android:layout_marginEnd="8dp" />
 
                         <EditText
@@ -170,17 +171,17 @@
                             android:layout_weight="1"
                             android:hint="Inches"
                             android:inputType="number"
-                            android:textSize="16sp" />
+                            android:textSize="16sp"
+                            android:textColor="#1C1C1E" />
 
                     </LinearLayout>
 
-                    <!-- Weight -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Weight"
                         android:textSize="12sp"
-                        android:textColor="#888888"
+                        android:textColor="#666666"
                         android:layout_marginBottom="2dp" />
 
                     <TextView
@@ -189,7 +190,7 @@
                         android:layout_height="wrap_content"
                         android:text="--"
                         android:textSize="16sp"
-                        android:textColor="#1A1A2E"
+                        android:textColor="#1C1C1E"
                         android:layout_marginBottom="12dp" />
 
                     <EditText
@@ -199,16 +200,16 @@
                         android:hint="Weight (lbs)"
                         android:inputType="numberDecimal"
                         android:textSize="16sp"
+                        android:textColor="#1C1C1E"
                         android:visibility="gone"
                         android:layout_marginBottom="12dp" />
 
-                    <!-- Gender -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Gender"
                         android:textSize="12sp"
-                        android:textColor="#888888"
+                        android:textColor="#666666"
                         android:layout_marginBottom="2dp" />
 
                     <TextView
@@ -217,7 +218,7 @@
                         android:layout_height="wrap_content"
                         android:text="--"
                         android:textSize="16sp"
-                        android:textColor="#1A1A2E"
+                        android:textColor="#1C1C1E"
                         android:layout_marginBottom="12dp" />
 
                     <LinearLayout
@@ -239,6 +240,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Male"
+                                android:textColor="#1C1C1E"
                                 android:layout_marginEnd="16dp" />
 
                             <RadioButton
@@ -246,25 +248,150 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Female"
+                                android:textColor="#1C1C1E"
                                 android:layout_marginEnd="16dp" />
 
                             <RadioButton
                                 android:id="@+id/radioOther"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Other" />
+                                android:text="Other"
+                                android:textColor="#1C1C1E" />
 
                         </RadioGroup>
-
                     </LinearLayout>
 
-                    <!-- Save button shown only in edit mode -->
                     <Button
                         android:id="@+id/saveButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Save Changes"
+                        android:textColor="#1C1C1E"
+                        android:backgroundTint="#B6F500"
                         android:visibility="gone" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Chart time range card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FFFADC">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Chart Time Range"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#1C1C1E"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:id="@+id/chartRangeLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Showing: All Time"
+                        android:textSize="14sp"
+                        android:textColor="#1C1C1E"
+                        android:layout_marginBottom="12dp" />
+
+                    <SeekBar
+                        android:id="@+id/chartRangeSlider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:max="2"
+                        android:progress="0"
+                        android:progressTint="#B6F500"
+                        android:thumbTint="#B6F500" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="All Time"
+                            android:textSize="11sp"
+                            android:textColor="#1C1C1E"
+                            android:gravity="start" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="30 Days"
+                            android:textSize="11sp"
+                            android:textColor="#1C1C1E"
+                            android:gravity="center" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="7 Days"
+                            android:textSize="11sp"
+                            android:textColor="#1C1C1E"
+                            android:gravity="end" />
+
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Logout card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FFFADC">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Account"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#1C1C1E"
+                        android:layout_marginBottom="12dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Logging out will permanently delete all your profile data and workout history."
+                        android:textSize="13sp"
+                        android:textColor="#1C1C1E"
+                        android:layout_marginBottom="16dp" />
+
+                    <Button
+                        android:id="@+id/logoutButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Log Out &amp; Clear All Data"
+                        android:backgroundTint="#FF3B30"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp" />
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -272,7 +399,7 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Nav bar at bottom -->
+    <!-- Nav bar -->
     <include layout="@layout/nav_bar" />
 
 </LinearLayout>

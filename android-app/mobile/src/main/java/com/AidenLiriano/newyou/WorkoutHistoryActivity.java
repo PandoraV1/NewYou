@@ -1,5 +1,7 @@
 package com.AidenLiriano.newyou;
 
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -7,14 +9,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -26,13 +26,24 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
     private LinearLayout historyContainer;
     private EditText searchBox;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
-    // Full unfiltered list loaded from database
     private List<Activity> allActivities = new ArrayList<>();
+    private int currentUserId = -1;
+
+    private static final int COLOR_CARD      = Color.parseColor("#FFFADC");
+    private static final int COLOR_CARD_ALT  = Color.parseColor("#FFF5C0");
+    private static final int COLOR_TEXT      = Color.parseColor("#1C1C1E");
+    private static final int COLOR_SUBTEXT   = Color.parseColor("#555555");
+    private static final int COLOR_DIVIDER   = Color.parseColor("#DDD8A0");
+    private static final int COLOR_GREEN     = Color.parseColor("#7DB800");
+    private static final int COLOR_ACCENT    = Color.parseColor("#4A7A00");
 
     private static final String[] WORKOUT_NAMES = {
             "", "Running", "Swimming", "Biking",
             "Walking", "Hiking", "Meditation", "Strength Training", "Yoga"
+    };
+
+    private static final String[] WORKOUT_EMOJIS = {
+            "", "🏃", "🏊", "🚴", "🚶", "🥾", "🧘", "🏋️", "🧘"
     };
 
     @Override
@@ -44,185 +55,275 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
         searchBox        = findViewById(R.id.searchBox);
         Button clearButton = findViewById(R.id.clearButton);
 
-        NavHelper.setup(this);
-
         clearButton.setOnClickListener(v ->
                 new AlertDialog.Builder(this)
                         .setTitle("Clear History")
-                        .setMessage("Are you sure you want to delete all workout history?")
-                        .setPositiveButton("Delete", (dialog, which) -> clearHistory())
+                        .setMessage("Are you sure you want to delete all workout history? This cannot be undone.")
+                        .setPositiveButton("Delete Everything", (dialog, which) -> clearHistory())
                         .setNegativeButton("Cancel", null)
                         .show()
         );
 
-        // Filter in real time as the user types
         searchBox.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 filterAndDisplay(s.toString().trim());
             }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
 
-        loadHistory();
+        NavHelper.setup(this);
+
+        executor.execute(() -> {
+            AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
+            User user = db.appDao().getFirstUser();
+            if (user != null) currentUserId = user.userId;
+            runOnUiThread(this::loadHistory);
+        });
     }
 
     private void loadHistory() {
+        if (currentUserId == -1) return;
         executor.execute(() -> {
             AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
-            List<Activity> activities = db.appDao().getActivitiesForUser(1);
-
+            List<Activity> activities = db.appDao().getActivitiesForUser(currentUserId);
             runOnUiThread(() -> {
                 allActivities = activities;
-                // Show full list on load with whatever is currently in the search box
                 filterAndDisplay(searchBox.getText().toString().trim());
             });
         });
     }
 
-    // Filters allActivities by the search query and redraws the list
     private void filterAndDisplay(String query) {
         List<Activity> filtered = new ArrayList<>();
-
         if (query.isEmpty()) {
-            // No filter — show everything
             filtered.addAll(allActivities);
         } else {
             String lowerQuery = query.toLowerCase();
-
             for (Activity activity : allActivities) {
-                // Check activity type name match
                 String workoutName = activity.activityType >= 1
                         && activity.activityType <= 8
-                        ? WORKOUT_NAMES[activity.activityType].toLowerCase()
-                        : "";
-
+                        ? WORKOUT_NAMES[activity.activityType].toLowerCase() : "";
                 boolean matchesType = workoutName.contains(lowerQuery);
-
-                // Check date match — try both "Apr 30" and "4/30" formats
                 boolean matchesDate = matchesDate(activity.startTime, lowerQuery);
-
-                if (matchesType || matchesDate) {
-                    filtered.add(activity);
-                }
+                if (matchesType || matchesDate) filtered.add(activity);
             }
         }
-
         drawList(filtered);
     }
 
-    // Returns true if the timestamp matches the query in either date format
     private boolean matchesDate(long timestamp, String query) {
         Date date = new Date(timestamp);
-
-        // Format 1: "Apr 30" style
-        String monthDay = new SimpleDateFormat("MMM d", Locale.getDefault())
-                .format(date).toLowerCase();
-
-        // Format 2: "4/30" style
-        String numericDate = new SimpleDateFormat("M/d", Locale.getDefault())
-                .format(date);
-
-        // Format 3: Full month name "april 30"
-        String fullMonthDay = new SimpleDateFormat("MMMM d", Locale.getDefault())
-                .format(date).toLowerCase();
-
-        // Format 4: Year included "Apr 30 2025"
-        String withYear = new SimpleDateFormat("MMM d yyyy", Locale.getDefault())
-                .format(date).toLowerCase();
-
-        return monthDay.contains(query)
-                || numericDate.contains(query)
-                || fullMonthDay.contains(query)
-                || withYear.contains(query);
+        String monthDay     = new SimpleDateFormat("MMM d", Locale.getDefault()).format(date).toLowerCase();
+        String numericDate  = new SimpleDateFormat("M/d", Locale.getDefault()).format(date);
+        String fullMonthDay = new SimpleDateFormat("MMMM d", Locale.getDefault()).format(date).toLowerCase();
+        String withYear     = new SimpleDateFormat("MMM d yyyy", Locale.getDefault()).format(date).toLowerCase();
+        return monthDay.contains(query) || numericDate.contains(query)
+                || fullMonthDay.contains(query) || withYear.contains(query);
     }
 
-    // Clears and redraws the history container with the given list
     private void drawList(List<Activity> activities) {
         historyContainer.removeAllViews();
 
         if (activities.isEmpty()) {
-            TextView empty = new TextView(this);
-            empty.setText(allActivities.isEmpty()
-                    ? "No workout history yet."
+            LinearLayout emptyLayout = new LinearLayout(this);
+            emptyLayout.setOrientation(LinearLayout.VERTICAL);
+            emptyLayout.setGravity(android.view.Gravity.CENTER);
+            emptyLayout.setPadding(32, 64, 32, 64);
+
+            TextView emptyIcon = new TextView(this);
+            emptyIcon.setText("📋");
+            emptyIcon.setTextSize(48f);
+            emptyIcon.setGravity(android.view.Gravity.CENTER);
+            emptyLayout.addView(emptyIcon);
+
+            TextView emptyText = new TextView(this);
+            emptyText.setText(allActivities.isEmpty()
+                    ? "No workout history yet.\nStart a workout to see it here!"
                     : "No workouts match your search.");
-            empty.setTextSize(16f);
-            empty.setPadding(32, 32, 32, 32);
-            historyContainer.addView(empty);
+            emptyText.setTextSize(16f);
+            emptyText.setTextColor(COLOR_SUBTEXT);
+            emptyText.setGravity(android.view.Gravity.CENTER);
+            emptyText.setPadding(0, 16, 0, 0);
+            emptyText.setLineSpacing(8f, 1f);
+            emptyLayout.addView(emptyText);
+
+            historyContainer.addView(emptyLayout);
             return;
         }
 
-        AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
+        // Section header
+        TextView countLabel = new TextView(this);
+        countLabel.setText(activities.size() + " workout" + (activities.size() != 1 ? "s" : "") + " found");
+        countLabel.setTextSize(13f);
+        countLabel.setTextColor(COLOR_SUBTEXT);
+        countLabel.setTypeface(null, Typeface.ITALIC);
+        countLabel.setPadding(8, 0, 8, 12);
+        historyContainer.addView(countLabel);
 
-        for (Activity activity : activities) {
-            addActivityCard(activity, db);
+        AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
+        for (int i = 0; i < activities.size(); i++) {
+            addActivityCard(activities.get(i), db, i);
         }
     }
 
-    private void addActivityCard(Activity activity, AppDatabase db) {
+    private void addActivityCard(Activity activity, AppDatabase db, int index) {
+        // Alternating card colors for readability
+        int cardColor = index % 2 == 0 ? COLOR_CARD : COLOR_CARD_ALT;
+
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(24, 24, 24, 24);
-        card.setBackgroundResource(android.R.drawable.dialog_holo_light_frame);
+        card.setPadding(20, 20, 20, 20);
+        card.setBackgroundColor(cardColor);
 
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        cardParams.setMargins(16, 16, 16, 8);
+        cardParams.setMargins(0, 0, 0, 8);
         card.setLayoutParams(cardParams);
 
+        // Colored left accent bar
+        LinearLayout cardWithAccent = new LinearLayout(this);
+        cardWithAccent.setOrientation(LinearLayout.HORIZONTAL);
+        cardWithAccent.setBackgroundColor(cardColor);
+
+        View accentBar = new View(this);
+        LinearLayout.LayoutParams accentParams = new LinearLayout.LayoutParams(6,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        accentParams.setMargins(0, 0, 16, 0);
+        accentBar.setLayoutParams(accentParams);
+        accentBar.setBackgroundColor(COLOR_GREEN);
+
+        LinearLayout cardContent = new LinearLayout(this);
+        cardContent.setOrientation(LinearLayout.VERTICAL);
+        cardContent.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        // Workout type and emoji header
+        String emoji = activity.activityType >= 1 && activity.activityType <= 8
+                ? WORKOUT_EMOJIS[activity.activityType] : "💪";
         String workoutName = activity.activityType >= 1 && activity.activityType <= 8
                 ? WORKOUT_NAMES[activity.activityType] : "Unknown";
 
-        String date = new SimpleDateFormat("MMM dd, yyyy  hh:mm a", Locale.getDefault())
-                .format(new Date(activity.startTime));
+        TextView nameText = new TextView(this);
+        nameText.setText(emoji + "  " + workoutName);
+        nameText.setTextSize(18f);
+        nameText.setTypeface(null, Typeface.BOLD);
+        nameText.setTextColor(COLOR_TEXT);
+        nameText.setPadding(0, 0, 0, 4);
+        cardContent.addView(nameText);
 
-        TextView summaryText = new TextView(this);
-        summaryText.setTextSize(16f);
-        summaryText.setTypeface(null, android.graphics.Typeface.BOLD);
-        summaryText.setText(workoutName + "  —  " + date);
-        card.addView(summaryText);
+        // Date
+        String date = new SimpleDateFormat("EEE, MMM dd yyyy  •  hh:mm a",
+                Locale.getDefault()).format(new Date(activity.startTime));
+        TextView dateText = new TextView(this);
+        dateText.setText(date);
+        dateText.setTextSize(12f);
+        dateText.setTextColor(COLOR_SUBTEXT);
+        dateText.setPadding(0, 0, 0, 8);
+        cardContent.addView(dateText);
 
+        // Expand/collapse hint
+        TextView expandHint = new TextView(this);
+        expandHint.setText("Tap to see details  ▼");
+        expandHint.setTextSize(12f);
+        expandHint.setTextColor(COLOR_ACCENT);
+        expandHint.setTypeface(null, Typeface.ITALIC);
+        cardContent.addView(expandHint);
+
+        // Detail container
         LinearLayout detailContainer = new LinearLayout(this);
         detailContainer.setOrientation(LinearLayout.VERTICAL);
         detailContainer.setVisibility(View.GONE);
-        detailContainer.setPadding(0, 12, 0, 0);
 
         executor.execute(() -> {
             String details = getDetailsForActivity(activity, db);
             runOnUiThread(() -> {
-                TextView detailText = new TextView(this);
-                detailText.setTextSize(14f);
-                detailText.setLineSpacing(6f, 1f);
-                detailText.setText(details);
-                detailContainer.addView(detailText);
+                // Divider before details
+                View divider = new View(this);
+                LinearLayout.LayoutParams divParams = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, 1);
+                divParams.setMargins(0, 12, 0, 12);
+                divider.setLayoutParams(divParams);
+                divider.setBackgroundColor(COLOR_DIVIDER);
+                detailContainer.addView(divider);
+
+                // Parse and display each detail line with its own row
+                String[] lines = details.split("\n");
+                for (String line : lines) {
+                    if (line.trim().isEmpty()) continue;
+                    String[] parts = line.split(": ", 2);
+
+                    LinearLayout row = new LinearLayout(this);
+                    row.setOrientation(LinearLayout.HORIZONTAL);
+                    LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT);
+                    rowParams.setMargins(0, 4, 0, 4);
+                    row.setLayoutParams(rowParams);
+
+                    if (parts.length == 2) {
+                        TextView labelView = new TextView(this);
+                        labelView.setText(parts[0]);
+                        labelView.setTextSize(13f);
+                        labelView.setTextColor(COLOR_SUBTEXT);
+                        labelView.setLayoutParams(new LinearLayout.LayoutParams(
+                                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+                        row.addView(labelView);
+
+                        TextView valueView = new TextView(this);
+                        valueView.setText(parts[1]);
+                        valueView.setTextSize(13f);
+                        valueView.setTextColor(COLOR_TEXT);
+                        valueView.setTypeface(null, Typeface.BOLD);
+                        row.addView(valueView);
+                    } else {
+                        TextView fullLine = new TextView(this);
+                        fullLine.setText(line);
+                        fullLine.setTextSize(13f);
+                        fullLine.setTextColor(COLOR_TEXT);
+                        row.addView(fullLine);
+                    }
+
+                    detailContainer.addView(row);
+                }
             });
         });
 
-        card.addView(detailContainer);
+        cardContent.addView(detailContainer);
+        cardWithAccent.addView(accentBar);
+        cardWithAccent.addView(cardContent);
 
-        card.setOnClickListener(v -> {
+        // Wrap in outer card with rounded corners simulation via padding
+        LinearLayout outerCard = new LinearLayout(this);
+        outerCard.setOrientation(LinearLayout.VERTICAL);
+        outerCard.setBackgroundColor(cardColor);
+        LinearLayout.LayoutParams outerParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        outerParams.setMargins(4, 4, 4, 8);
+        outerCard.setLayoutParams(outerParams);
+        outerCard.setPadding(16, 16, 16, 16);
+        outerCard.addView(cardWithAccent);
+
+        outerCard.setOnClickListener(v -> {
             if (detailContainer.getVisibility() == View.GONE) {
                 detailContainer.setVisibility(View.VISIBLE);
+                expandHint.setText("Tap to collapse  ▲");
             } else {
                 detailContainer.setVisibility(View.GONE);
+                expandHint.setText("Tap to see details  ▼");
             }
         });
 
-        historyContainer.addView(card);
+        historyContainer.addView(outerCard);
     }
 
     private String getDetailsForActivity(Activity activity, AppDatabase db) {
         AppDao dao = db.appDao();
         int id = activity.activityId;
         StringBuilder sb = new StringBuilder();
-
         switch (activity.activityType) {
             case 1: {
                 RunningData d = dao.getRunningData(id);
@@ -312,10 +413,8 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
                 }
                 break;
             }
-            default:
-                sb.append("No details available.");
+            default: sb.append("No details available.");
         }
-
         return sb.toString();
     }
 
@@ -336,6 +435,7 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
     }
 
     private void clearHistory() {
+        if (currentUserId == -1) return;
         executor.execute(() -> {
             AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
             db.appDao().clearAllActivities();

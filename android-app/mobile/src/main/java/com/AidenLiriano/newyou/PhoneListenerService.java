@@ -1,13 +1,10 @@
 package com.AidenLiriano.newyou;
 
-import android.app.ActivityManager;
-import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -16,7 +13,6 @@ public class PhoneListenerService extends WearableListenerService {
     private static final String TAG = "PhoneListenerService";
     private final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
-    // Static reference to the live activity so we can push updates to it
     public static LiveWorkoutActivity liveWorkoutActivity = null;
 
     @Override
@@ -36,7 +32,15 @@ public class PhoneListenerService extends WearableListenerService {
                     AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
                     AppDao dao = db.appDao();
 
-                    Activity activity = new Activity(1, activityType, timestamp, 0);
+                    // Get real user ID instead of hardcoding 1
+                    User user = dao.getFirstUser();
+                    if (user == null) {
+                        Log.e(TAG, "No user found — cannot insert activity");
+                        return;
+                    }
+                    int userId = user.userId;
+
+                    Activity activity = new Activity(userId, activityType, timestamp, 0);
                     long activityId = dao.insertActivity(activity);
                     Log.d(TAG, "Inserted activity ID: " + activityId + " type: " + activityType);
 
@@ -66,7 +70,7 @@ public class PhoneListenerService extends WearableListenerService {
                     intent.putExtra(LiveWorkoutActivity.EXTRA_WORKOUT_TYPE, activityType);
                     getApplicationContext().startActivity(intent);
 
-                    Log.d(TAG, "Successfully saved and opened live screen for: " + workoutName);
+                    Log.d(TAG, "Saved and opened live screen for: " + workoutName);
                 });
 
             } catch (NumberFormatException e) {
@@ -75,7 +79,6 @@ public class PhoneListenerService extends WearableListenerService {
         }
 
         // --- Live Update ---
-        // Path: /workout_live/type/activityId/elapsed/hr/cal/steps/dist/pace/speed/elevGain/laps
         else if (path.startsWith("/workout_live/")) {
             try {
                 String[] p = path.replace("/workout_live/", "").split("/");
@@ -89,7 +92,24 @@ public class PhoneListenerService extends WearableListenerService {
                 float elevGain      = Float.parseFloat(p[9]);
                 int laps            = Integer.parseInt(p[10]);
 
-                // Push update to live screen if it is open
+                // In the /workout_live/ handler, add after parsing laps:
+                int gpsActive = p.length > 11 ? Integer.parseInt(p[11]) : 0;
+
+                if (liveWorkoutActivity != null) {
+                    liveWorkoutActivity.updateLiveStats(
+                            elapsedSeconds, heartRate, calories,
+                            steps, distanceKm, pace, speed, elevGain, laps
+                    );
+                    // Update GPS status indicator
+                    final boolean usingGps = gpsActive == 1;
+                    liveWorkoutActivity.runOnUiThread(() -> {
+                        if (liveWorkoutActivity.gpsStatusView != null) {
+                            liveWorkoutActivity.gpsStatusView.setText(
+                                    usingGps ? "📍 GPS Active" : "");
+                        }
+                    });
+                }
+
                 if (liveWorkoutActivity != null) {
                     liveWorkoutActivity.updateLiveStats(
                             elapsedSeconds, heartRate, calories,
@@ -103,7 +123,6 @@ public class PhoneListenerService extends WearableListenerService {
         }
 
         // --- Workout STOPPED ---
-        // Path: /workout_stop/type/activityId/duration/hr/cal/steps/dist/pace/speed/elevGain/elevLoss/hrStart/hrEnd/laps
         else if (path.startsWith("/workout_stop/")) {
             try {
                 String[] p = path.replace("/workout_stop/", "").split("/");
@@ -123,14 +142,13 @@ public class PhoneListenerService extends WearableListenerService {
                 int laps            = Integer.parseInt(p[13]);
                 long endTime        = System.currentTimeMillis();
 
-                float poolLengthKm = 0.025f;
-                float swimDistance = laps * poolLengthKm;
-                float swimPace     = duration > 0 && swimDistance > 0
+                float poolLengthKm  = 0.025f;
+                float swimDistance  = laps * poolLengthKm;
+                float swimPace      = duration > 0 && swimDistance > 0
                         ? (duration / 60f) / swimDistance : 0f;
 
                 final String workoutName = new String(messageEvent.getData());
 
-                // Format summary for toast
                 long h = duration / 3600;
                 long m = (duration % 3600) / 60;
                 long s = duration % 60;
@@ -140,25 +158,22 @@ public class PhoneListenerService extends WearableListenerService {
                         : s + "s";
                 final String summary = workoutName + " complete!\n"
                         + "Duration: " + formattedDuration + "  |  "
-                        + calories + " kcal  |  "
-                        + (heartRate > 0 ? heartRate + " bpm avg" : "");
-
-                // Recalculate calories using real user weight
-                float[] metValues = {0, 9.8f, 6.0f, 7.5f, 3.5f, 6.0f, 2.5f, 5.0f, 3.0f};
-                float met = activityType >= 1 && activityType <= 8 ? metValues[activityType] : 5.0f;
-
-                // Get user weight from database
-                AppDatabase dbCheck = AppDatabase.getDatabase(getApplicationContext());
-                User user = dbCheck.appDao().getFirstUser();
-                float weightLbs = user != null && user.weightLbs > 0 ? user.weightLbs : 154f;
-                int recalculatedCalories = recalculateCalories(met, weightLbs, duration);
-
-                // Use recalculated value going forward
-                final int finalCalories = recalculatedCalories;
+                        + calories + " kcal"
+                        + (heartRate > 0 ? "  |  " + heartRate + " bpm avg" : "");
 
                 databaseExecutor.execute(() -> {
                     AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
                     AppDao dao = db.appDao();
+
+                    // Recalculate calories using real user weight
+                    float[] metValues = {0, 9.8f, 6.0f, 7.5f, 3.5f,
+                            6.0f, 2.5f, 5.0f, 3.0f};
+                    float met = activityType >= 1 && activityType <= 8
+                            ? metValues[activityType] : 5.0f;
+                    User user = dao.getFirstUser();
+                    float weightLbs = user != null && user.weightLbs > 0
+                            ? user.weightLbs : 154f;
+                    int finalCalories = recalculateCalories(met, weightLbs, duration);
 
                     dao.updateActivityEndTime(activityId, endTime);
 
@@ -185,7 +200,6 @@ public class PhoneListenerService extends WearableListenerService {
                     Log.d(TAG, "Workout saved. ID: " + activityId
                             + " duration: " + duration + "s");
 
-                    // Close live screen and show summary toast on main thread
                     if (liveWorkoutActivity != null) {
                         liveWorkoutActivity.runOnUiThread(() -> {
                             android.widget.Toast.makeText(
@@ -198,13 +212,15 @@ public class PhoneListenerService extends WearableListenerService {
                         });
                     }
                 });
+
             } catch (Exception e) {
                 Log.e(TAG, "Failed to parse workout stop: " + path, e);
             }
         }
     }
 
-    private int recalculateCalories(float metValue, float weightLbs, long durationSeconds) {
+    private int recalculateCalories(float metValue, float weightLbs,
+                                    long durationSeconds) {
         float weightKg = weightLbs * 0.453592f;
         float durationHours = durationSeconds / 3600f;
         return (int) (metValue * weightKg * durationHours);

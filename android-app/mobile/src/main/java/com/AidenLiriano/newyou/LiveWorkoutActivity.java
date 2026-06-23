@@ -1,6 +1,8 @@
 package com.AidenLiriano.newyou;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,6 +12,7 @@ public class LiveWorkoutActivity extends AppCompatActivity {
 
     public static final String EXTRA_WORKOUT_NAME = "workout_name";
     public static final String EXTRA_WORKOUT_TYPE = "workout_type";
+    public TextView gpsStatusView;
 
     private TextView tvWorkoutName;
     private TextView tvTimer;
@@ -22,15 +25,13 @@ public class LiveWorkoutActivity extends AppCompatActivity {
     private TextView tvElevation;
     private TextView tvLaps;
     private TextView tvWaiting;
-
-    // Labels so we can hide irrelevant ones per workout type
     private LinearLayout labelSteps;
     private LinearLayout labelDistance;
     private LinearLayout labelPace;
     private LinearLayout labelSpeed;
     private LinearLayout labelElevation;
     private LinearLayout labelLaps;
-
+    private ConfettiView liveConfettiView;
     private int workoutType = 0;
 
     @Override
@@ -60,16 +61,18 @@ public class LiveWorkoutActivity extends AppCompatActivity {
         labelElevation = findViewById(R.id.labelElevation);
         labelLaps      = findViewById(R.id.labelLaps);
 
+        liveConfettiView = findViewById(R.id.liveConfettiView);
+        gpsStatusView = findViewById(R.id.gpsStatus);
+
         tvWorkoutName.setText(workoutName != null ? workoutName : "Workout");
 
-        // Show only relevant stats for this workout type
         configureVisibleStats(workoutType);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Register this activity so PhoneListenerService can push updates to it
+        // Register activity so PhoneListenerService can push updates to it
         PhoneListenerService.liveWorkoutActivity = this;
     }
 
@@ -179,6 +182,16 @@ public class LiveWorkoutActivity extends AppCompatActivity {
 
     // Called by PhoneListenerService when workout stops
     public void finishWorkout() {
-        runOnUiThread(this::finish);
+        runOnUiThread(() -> {
+            if (liveConfettiView != null) {
+                liveConfettiView.setVisibility(View.VISIBLE);
+                liveConfettiView.startConfetti();
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    finish();
+                }, 2000);
+            } else {
+                finish();
+            }
+        });
     }
 }

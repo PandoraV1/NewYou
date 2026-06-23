@@ -39,7 +39,7 @@ public interface AppDao {
     @Query("DELETE FROM activities")
     void clearAllActivities();
 
-    // --- Global averages across all workouts ---
+    // --- Global averages for all workouts ---
 
     // Average heart rate across all workout types
     @Query("SELECT AVG(heart_rate) FROM running_data WHERE activity_id IN " +
@@ -365,4 +365,176 @@ public interface AppDao {
 
     @Query("SELECT * FROM yoga_data WHERE activity_id = :activityId")
     YogaData getYogaData(int activityId);
+
+    // --- Full data wipe for logout ---
+    @Query("DELETE FROM user")
+    void deleteAllUsers();
+
+    @Query("DELETE FROM activities")
+    void deleteAllActivities();
+
+    @Query("DELETE FROM running_data")
+    void deleteAllRunningData();
+
+    @Query("DELETE FROM swimming_data")
+    void deleteAllSwimmingData();
+
+    @Query("DELETE FROM biking_data")
+    void deleteAllBikingData();
+
+    @Query("DELETE FROM walking_data")
+    void deleteAllWalkingData();
+
+    @Query("DELETE FROM hiking_data")
+    void deleteAllHikingData();
+
+    @Query("DELETE FROM meditation_data")
+    void deleteAllMeditationData();
+
+    @Query("DELETE FROM strength_training_data")
+    void deleteAllStrengthTrainingData();
+
+    @Query("DELETE FROM yoga_data")
+    void deleteAllYogaData();
+
+    @Query("SELECT COUNT(*) FROM user")
+    int getUserCount();
+
+    // --- Chart data queries ---
+
+    // Activities within a time range
+    @Query("SELECT * FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime ORDER BY start_time ASC")
+    List<Activity> getActivitiesFrom(int userId, long fromTime);
+
+    // Running data joined with activity start time for charting
+    @Query("SELECT r.*, a.start_time FROM running_data r " +
+            "INNER JOIN activities a ON r.activity_id = a.activity_id " +
+            "WHERE a.user_id = :userId AND a.start_time >= :fromTime " +
+            "ORDER BY a.start_time ASC")
+    List<RunningData> getRunningDataFrom(int userId, long fromTime);
+
+    @Query("SELECT r.*, a.start_time FROM swimming_data r " +
+            "INNER JOIN activities a ON r.activity_id = a.activity_id " +
+            "WHERE a.user_id = :userId AND a.start_time >= :fromTime " +
+            "ORDER BY a.start_time ASC")
+    List<SwimmingData> getSwimmingDataFrom(int userId, long fromTime);
+
+    @Query("SELECT r.*, a.start_time FROM biking_data r " +
+            "INNER JOIN activities a ON r.activity_id = a.activity_id " +
+            "WHERE a.user_id = :userId AND a.start_time >= :fromTime " +
+            "ORDER BY a.start_time ASC")
+    List<BikingData> getBikingDataFrom(int userId, long fromTime);
+
+    @Query("SELECT r.*, a.start_time FROM walking_data r " +
+            "INNER JOIN activities a ON r.activity_id = a.activity_id " +
+            "WHERE a.user_id = :userId AND a.start_time >= :fromTime " +
+            "ORDER BY a.start_time ASC")
+    List<WalkingData> getWalkingDataFrom(int userId, long fromTime);
+
+    @Query("SELECT r.*, a.start_time FROM hiking_data r " +
+            "INNER JOIN activities a ON r.activity_id = a.activity_id " +
+            "WHERE a.user_id = :userId AND a.start_time >= :fromTime " +
+            "ORDER BY a.start_time ASC")
+    List<HikingData> getHikingDataFrom(int userId, long fromTime);
+
+    @Query("SELECT r.*, a.start_time FROM meditation_data r " +
+            "INNER JOIN activities a ON r.activity_id = a.activity_id " +
+            "WHERE a.user_id = :userId AND a.start_time >= :fromTime " +
+            "ORDER BY a.start_time ASC")
+    List<MeditationData> getMeditationDataFrom(int userId, long fromTime);
+
+    @Query("SELECT r.*, a.start_time FROM strength_training_data r " +
+            "INNER JOIN activities a ON r.activity_id = a.activity_id " +
+            "WHERE a.user_id = :userId AND a.start_time >= :fromTime " +
+            "ORDER BY a.start_time ASC")
+    List<StrengthTrainingData> getStrengthDataFrom(int userId, long fromTime);
+
+    @Query("SELECT r.*, a.start_time FROM yoga_data r " +
+            "INNER JOIN activities a ON r.activity_id = a.activity_id " +
+            "WHERE a.user_id = :userId AND a.start_time >= :fromTime " +
+            "ORDER BY a.start_time ASC")
+    List<YogaData> getYogaDataFrom(int userId, long fromTime);
+
+    // Total calories per activity type within time range for bar chart
+    @Query("SELECT SUM(calories) FROM running_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    int getRunningCaloriesFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(calories) FROM swimming_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    int getSwimmingCaloriesFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(calories) FROM biking_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    int getBikingCaloriesFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(calories) FROM walking_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    int getWalkingCaloriesFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(calories) FROM hiking_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    int getHikingCaloriesFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(calories) FROM strength_training_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    int getStrengthCaloriesFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(calories) FROM yoga_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    int getYogaCaloriesFrom(int userId, long fromTime);
+
+    // Session counts per activity type
+    @Query("SELECT COUNT(*) FROM activities WHERE user_id = :userId " +
+            "AND activity_type = :type AND start_time >= :fromTime")
+    int getSessionCountByTypeFrom(int userId, int type, long fromTime);
+
+    // Duration sum per activity type
+    @Query("SELECT SUM(duration) FROM running_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    long getRunningDurationFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(duration) FROM swimming_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    long getSwimmingDurationFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(duration) FROM biking_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    long getBikingDurationFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(duration) FROM walking_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    long getWalkingDurationFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(duration) FROM hiking_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    long getHikingDurationFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(duration) FROM meditation_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    long getMeditationDurationFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(duration) FROM strength_training_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    long getStrengthDurationFrom(int userId, long fromTime);
+
+    @Query("SELECT SUM(duration) FROM yoga_data WHERE activity_id IN " +
+            "(SELECT activity_id FROM activities WHERE user_id = :userId " +
+            "AND start_time >= :fromTime)")
+    long getYogaDurationFrom(int userId, long fromTime);
 }

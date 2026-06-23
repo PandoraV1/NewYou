@@ -5,40 +5,40 @@
     android:layout_width="match_parent"
     android:layout_height="56dp"
     android:orientation="horizontal"
-    android:background="#FFFFFF"
+    android:background="#98CD00"
     android:elevation="8dp">
 
-    <!-- Settings -->
-    <ImageButton
-        android:id="@+id/navSettings"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:src="@android:drawable/ic_menu_preferences"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Settings"
-        android:scaleType="center" />
-
-    <!-- Home -->
-    <ImageButton
-        android:id="@+id/navHome"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:src="@android:drawable/ic_menu_compass"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Home"
-        android:scaleType="center" />
-
-    <!-- History -->
     <ImageButton
         android:id="@+id/navHistory"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:src="@android:drawable/ic_menu_recent_history"
+        android:src="@drawable/history_svgrepo_com__1_"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="History"
+        android:tint="#1C1C1E"
+        android:scaleType="center" />
+
+    <ImageButton
+        android:id="@+id/navHome"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:src="@drawable/home_svgrepo_com"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Home"
+        android:tint="#1C1C1E"
+        android:scaleType="center" />
+
+    <ImageButton
+        android:id="@+id/navSettings"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:src="@drawable/settings_svgrepo_com"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Settings"
+        android:tint="#1C1C1E"
         android:scaleType="center" />
 
 </LinearLayout>

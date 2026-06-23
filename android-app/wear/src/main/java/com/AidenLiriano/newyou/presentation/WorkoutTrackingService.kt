@@ -20,7 +20,7 @@ class WorkoutTrackingService : Service() {
         const val ACTION_START = "ACTION_START_TRACKING"
         const val ACTION_STOP  = "ACTION_STOP_TRACKING"
 
-        // Shared sensor helper — MainActivity and the service both reference this
+        // Shared sensor helper, MainActivity and the service both reference this
         var sensorHelper: SensorManagerHelper? = null
     }
 
@@ -46,7 +46,6 @@ class WorkoutTrackingService : Service() {
         )
         wakeLock?.acquire(6 * 60 * 60 * 1000L) // Max 6 hours
 
-        // Start as foreground service with a visible notification
         startForeground(NOTIFICATION_ID, buildNotification())
     }
 

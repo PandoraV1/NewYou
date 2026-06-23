@@ -4,50 +4,70 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="#D9D49A">
 
-    <!-- Top bar -->
+    <!-- Fixed top bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:background="#7DB800"
         android:padding="16dp"
-        android:background="#FFFFFF"
-        android:elevation="4dp">
+        android:elevation="6dp"
+        android:gravity="center_vertical">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Workout History"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:gravity="center"
-            android:layout_gravity="center_vertical" />
+            android:textColor="#1C1C1E"
+            android:letterSpacing="0.02" />
 
         <Button
             android:id="@+id/clearButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="36dp"
             android:text="Clear"
-            android:textSize="14sp" />
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#CC2A22"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp" />
 
     </LinearLayout>
 
     <!-- Search box -->
-    <EditText
-        android:id="@+id/searchBox"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="4dp"
-        android:hint="Search by activity or date (e.g. Running, Apr 30, 4/30)"
-        android:textSize="14sp"
-        android:inputType="text"
-        android:background="@android:drawable/edit_text"
-        android:padding="10dp" />
+        android:orientation="horizontal"
+        android:background="#FFFADC"
+        android:padding="12dp"
+        android:elevation="2dp">
+
+        <EditText
+            android:id="@+id/searchBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="🔍  Search by activity or date (e.g. Running, Apr 30)"
+            android:textSize="14sp"
+            android:textColor="#1C1C1E"
+            android:textColorHint="#999999"
+            android:inputType="text"
+            android:background="@null"
+            android:padding="8dp" />
+
+    </LinearLayout>
+
+    <!-- Thin divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#C8C38A" />
 
     <!-- Scrollable list -->
     <ScrollView
@@ -60,11 +80,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="8dp" />
+            android:padding="12dp" />
 
     </ScrollView>
 
-    <!-- Nav bar at bottom -->
+    <!-- Nav bar -->
     <include layout="@layout/nav_bar" />
 
 </LinearLayout>

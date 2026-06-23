@@ -4,6 +4,7 @@ import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 import androidx.room.ColumnInfo;
 import androidx.room.ForeignKey;
+import androidx.room.Ignore;
 
 @Entity(
         tableName = "walking_data",
@@ -41,13 +42,19 @@ public class WalkingData {
     @ColumnInfo(name = "calories")
     public int calories;
 
+    // IMPORTANT
+    // TEMPORARY: Used for chart JOIN queries, not stored in DB
+    // Remember to remove @Ignore field when TestDataSeeder is removed
+    @Ignore
+    public long timestamp;
+
     public WalkingData(int activityId) {
         this.activityId = activityId;
-        this.duration = 0;
-        this.distance = 0;
-        this.stepCount = 0;
-        this.pace = 0;
-        this.heartRate = 0;
-        this.calories = 0;
+        this.duration   = 0;
+        this.distance   = 0;
+        this.stepCount  = 0;
+        this.pace       = 0;
+        this.heartRate  = 0;
+        this.calories   = 0;
     }
 }

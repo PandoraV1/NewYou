@@ -1,12 +1,9 @@
 package com.AidenLiriano.newyou;
 
 import android.content.Context;
-import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
-import androidx.sqlite.db.SupportSQLiteDatabase;
-import java.util.concurrent.Executors;
 
 @Database(
         entities = {
@@ -37,19 +34,6 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class, "newyou_database")
                             .fallbackToDestructiveMigration()
                             .setJournalMode(RoomDatabase.JournalMode.TRUNCATE)
-                            .addCallback(new Callback() {
-                                @Override
-                                public void onCreate(@NonNull SupportSQLiteDatabase db) {
-                                    super.onCreate(db);
-                                    Executors.newSingleThreadExecutor().execute(() -> {
-                                        // Default placeholder user — 5'9", 154 lbs (70kg)
-                                        User defaultUser = new User(
-                                                "Your Name", 25, 69, 154f, "Not set"
-                                        );
-                                        INSTANCE.appDao().insertUser(defaultUser);
-                                    });
-                                }
-                            })
                             .build();
                 }
             }

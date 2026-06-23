@@ -1,5 +1,6 @@
 package com.AidenLiriano.newyou;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -12,6 +13,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import android.widget.SeekBar;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -55,6 +57,17 @@ public class SettingsActivity extends AppCompatActivity {
         saveButton.setOnClickListener(v -> saveChanges());
 
         NavHelper.setup(this);
+
+        Button logoutButton = findViewById(R.id.logoutButton);
+        logoutButton.setOnClickListener(v -> {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Log Out")
+                    .setMessage("Are you sure? This will permanently delete all your profile data and workout history.")
+                    .setPositiveButton("Delete Everything", (dialog, which) -> performLogout())
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
+
         loadUser();
     }
 
@@ -131,13 +144,12 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void saveChanges() {
-        String name = editName.getText().toString().trim();
-        String ageStr = editAge.getText().toString().trim();
-        String ftStr = editHeightFt.getText().toString().trim();
-        String inStr = editHeightIn.getText().toString().trim();
+        String name      = editName.getText().toString().trim();
+        String ageStr    = editAge.getText().toString().trim();
+        String ftStr     = editHeightFt.getText().toString().trim();
+        String inStr     = editHeightIn.getText().toString().trim();
         String weightStr = editWeight.getText().toString().trim();
 
-        // Validation
         if (name.isEmpty()) {
             editName.setError("Please enter your name");
             return;
@@ -151,11 +163,57 @@ public class SettingsActivity extends AppCompatActivity {
             return;
         }
 
-        int age = Integer.parseInt(ageStr);
-        int feet = Integer.parseInt(ftStr);
-        int inches = inStr.isEmpty() ? 0 : Integer.parseInt(inStr);
+        // Validate numeric ranges before parsing
+        int age;
+        int feet;
+        int inches;
+        float weight;
+
+        try {
+            age = Integer.parseInt(ageStr);
+            if (age < 1 || age > 120) {
+                editAge.setError("Please enter a valid age (1-120)");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            editAge.setError("Please enter a valid age");
+            return;
+        }
+
+        try {
+            feet = Integer.parseInt(ftStr);
+            if (feet < 1 || feet > 8) {
+                editHeightFt.setError("Please enter a valid height in feet (1-8)");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            editHeightFt.setError("Please enter a valid number");
+            return;
+        }
+
+        try {
+            inches = inStr.isEmpty() ? 0 : Integer.parseInt(inStr);
+            if (inches < 0 || inches > 11) {
+                editHeightIn.setError("Inches must be 0-11");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            editHeightIn.setError("Please enter a valid number");
+            return;
+        }
+
+        try {
+            weight = weightStr.isEmpty() ? 0f : Float.parseFloat(weightStr);
+            if (weight < 1 || weight > 1500) {
+                editWeight.setError("Please enter a valid weight");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            editWeight.setError("Please enter a valid weight");
+            return;
+        }
+
         int totalInches = (feet * 12) + inches;
-        float weight = weightStr.isEmpty() ? 0f : Float.parseFloat(weightStr);
 
         // Get selected gender
         String gender = "Not set";
@@ -164,10 +222,10 @@ public class SettingsActivity extends AppCompatActivity {
         else if (selectedId == R.id.radioFemale) gender = "Female";
         else if (selectedId == R.id.radioOther)  gender = "Other";
 
-        final String finalGender = gender;
-        final int finalAge = age;
+        final String finalGender  = gender;
+        final int finalAge        = age;
         final int finalTotalInches = totalInches;
-        final float finalWeight = weight;
+        final float finalWeight   = weight;
 
         executor.execute(() -> {
             AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
@@ -175,7 +233,6 @@ public class SettingsActivity extends AppCompatActivity {
             db.appDao().updateUser(userId, name, finalAge,
                     finalTotalInches, finalWeight, finalGender);
 
-            // Reload updated user
             User updated = db.appDao().getFirstUser();
 
             runOnUiThread(() -> {
@@ -203,5 +260,43 @@ public class SettingsActivity extends AppCompatActivity {
         editHeightContainer.setVisibility(View.GONE);
         editWeight.setVisibility(View.GONE);
         editGenderContainer.setVisibility(View.GONE);
+    }
+
+    private void performLogout() {
+        executor.execute(() -> {
+            AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
+            AppDao dao = db.appDao();
+
+            // Wipe all data
+            dao.deleteAllYogaData();
+            dao.deleteAllStrengthTrainingData();
+            dao.deleteAllMeditationData();
+            dao.deleteAllHikingData();
+            dao.deleteAllWalkingData();
+            dao.deleteAllBikingData();
+            dao.deleteAllSwimmingData();
+            dao.deleteAllRunningData();
+            dao.deleteAllActivities();
+            dao.deleteAllUsers();
+
+            runOnUiThread(() -> {
+                Toast.makeText(this, "All data cleared.", Toast.LENGTH_SHORT).show();
+
+                // Send back to login screen and clear entire back stack
+                Intent intent = new Intent(this, LoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            });
+        });
+    }
+
+    private String getRangeLabel(int range) {
+        switch (range) {
+            case ChartPreferences.RANGE_7_DAYS:  return "Last 7 Days";
+            case ChartPreferences.RANGE_30_DAYS: return "Last 30 Days";
+            default:                              return "All Time";
+        }
     }
 }
