@@ -21,17 +21,23 @@ public class RecommendationsActivity extends AppCompatActivity {
     private LinearLayout recommendationsContainer;
     private TextView loadingText;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private String selectedWorkoutName = null;
 
-    private static final int COLOR_BG      = Color.parseColor("#D9D49A");
     private static final int COLOR_CARD    = Color.parseColor("#FFFADC");
     private static final int COLOR_TEXT    = Color.parseColor("#1C1C1E");
     private static final int COLOR_SUBTEXT = Color.parseColor("#555555");
     private static final int COLOR_GREEN   = Color.parseColor("#7DB800");
-    private static final int COLOR_REC     = Color.parseColor("#6AA800");
     private static final int COLOR_DIVIDER = Color.parseColor("#DDD8A0");
     private static final int COLOR_BUTTON  = Color.parseColor("#B6F500");
-    private static final int COLOR_SELECT  = Color.parseColor("#4A7A00");
+
+    // Tier background colors: low=soft blue, medium=soft green, high=soft orange
+    private static final int COLOR_LOW_BG  = Color.parseColor("#E3F2FD");
+    private static final int COLOR_MED_BG  = Color.parseColor("#F1F8E9");
+    private static final int COLOR_HIGH_BG = Color.parseColor("#FFF3E0");
+
+    // Tier accent colors for labels
+    private static final int COLOR_LOW_ACC  = Color.parseColor("#1565C0");
+    private static final int COLOR_MED_ACC  = Color.parseColor("#4A7A00");
+    private static final int COLOR_HIGH_ACC = Color.parseColor("#E65100");
 
     private static final String[] WORKOUT_EMOJIS = {
             "", "🏃", "🏊", "🚴", "🚶", "🥾", "🧘", "🏋️", "🧘"
@@ -82,47 +88,51 @@ public class RecommendationsActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 loadingText.setVisibility(View.GONE);
 
-                // Profile summary header
-                LinearLayout headerLayout = new LinearLayout(this);
-                headerLayout.setOrientation(LinearLayout.VERTICAL);
-                headerLayout.setBackgroundColor(COLOR_CARD);
+                // Profile summary header card
+                CardView headerCard = new CardView(this);
                 LinearLayout.LayoutParams headerParams = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT);
                 headerParams.setMargins(16, 8, 16, 16);
-                headerLayout.setLayoutParams(headerParams);
-                headerLayout.setPadding(20, 16, 20, 16);
+                headerCard.setLayoutParams(headerParams);
+                headerCard.setRadius(16f);
+                headerCard.setCardElevation(4f);
+                headerCard.setCardBackgroundColor(COLOR_CARD);
+
+                LinearLayout headerContent = new LinearLayout(this);
+                headerContent.setOrientation(LinearLayout.VERTICAL);
+                headerContent.setPadding(20, 16, 20, 16);
+                headerCard.addView(headerContent);
 
                 TextView headerTitle = new TextView(this);
-                headerTitle.setText("Your Recommendations");
+                headerTitle.setText("Your Personalised Workouts");
                 headerTitle.setTextSize(18f);
                 headerTitle.setTypeface(null, Typeface.BOLD);
                 headerTitle.setTextColor(COLOR_TEXT);
-                headerTitle.setPadding(0, 0, 0, 4);
-                headerLayout.addView(headerTitle);
+                headerTitle.setPadding(0, 0, 0, 6);
+                headerContent.addView(headerTitle);
 
-                String profileSummary = "Age " + age
+                TextView profileLine = new TextView(this);
+                profileLine.setText("Age " + age
                         + "  •  " + String.format("%.0f lbs", weightLbs)
                         + (avgHeartRate > 0
-                        ? "  •  Avg HR " + (int) avgHeartRate + " bpm"
-                        : "")
-                        + "  •  " + totalSessions + " sessions logged";
+                        ? "  •  Avg HR " + (int) avgHeartRate + " bpm" : "")
+                        + "  •  " + totalSessions + " sessions logged");
+                profileLine.setTextSize(12f);
+                profileLine.setTextColor(COLOR_SUBTEXT);
+                profileLine.setPadding(0, 0, 0, 6);
+                headerContent.addView(profileLine);
 
-                TextView summaryView = new TextView(this);
-                summaryView.setText(profileSummary);
-                summaryView.setTextSize(12f);
-                summaryView.setTextColor(COLOR_SUBTEXT);
-                headerLayout.addView(summaryView);
+                TextView hintLine = new TextView(this);
+                hintLine.setText("Each workout is built from your data. "
+                        + "Three intensities are shown — tap a card to expand. "
+                        + "Your recommended level is highlighted.");
+                hintLine.setTextSize(11f);
+                hintLine.setTextColor(COLOR_SUBTEXT);
+                hintLine.setTypeface(null, Typeface.ITALIC);
+                headerContent.addView(hintLine);
 
-                TextView tapHint = new TextView(this);
-                tapHint.setText("Tap any workout card to expand. Tap ⭐ Recommended to send to your watch.");
-                tapHint.setTextSize(11f);
-                tapHint.setTextColor(COLOR_SUBTEXT);
-                tapHint.setTypeface(null, Typeface.ITALIC);
-                tapHint.setPadding(0, 8, 0, 0);
-                headerLayout.addView(tapHint);
-
-                recommendationsContainer.addView(headerLayout);
+                recommendationsContainer.addView(headerCard);
 
                 for (int i = 0; i < recommendations.size(); i++) {
                     addWorkoutCard(recommendations.get(i), i + 1);
@@ -141,8 +151,7 @@ public class RecommendationsActivity extends AppCompatActivity {
         CardView card = new CardView(this);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
+                LinearLayout.LayoutParams.WRAP_CONTENT);
         cardParams.setMargins(16, 8, 16, 8);
         card.setLayoutParams(cardParams);
         card.setRadius(16f);
@@ -154,12 +163,11 @@ public class RecommendationsActivity extends AppCompatActivity {
         cardContent.setPadding(20, 18, 20, 18);
         card.addView(cardContent);
 
-        // Header row with workout name and expand icon
+        // Header row
         LinearLayout headerRow = new LinearLayout(this);
         headerRow.setOrientation(LinearLayout.HORIZONTAL);
         headerRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        // Color accent dot
         View dot = new View(this);
         LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(8, 8);
         dotParams.setMargins(0, 0, 10, 0);
@@ -177,12 +185,15 @@ public class RecommendationsActivity extends AppCompatActivity {
                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         headerRow.addView(workoutTitle);
 
-        // Recommended badge preview
+        // Show which tier is recommended as a small badge
         WorkoutRecommendationEngine.WorkoutPlan recPlan = recommendation.getRecommended();
+        int recTierIdx = recommendation.recommendedTierIndex;
+        int badgeColor = recTierIdx == 0 ? COLOR_LOW_ACC
+                : recTierIdx == 1 ? COLOR_MED_ACC : COLOR_HIGH_ACC;
         TextView recBadge = new TextView(this);
         recBadge.setText("⭐ " + recPlan.tierName);
-        recBadge.setTextSize(11f);
-        recBadge.setTextColor(COLOR_SELECT);
+        recBadge.setTextSize(10f);
+        recBadge.setTextColor(badgeColor);
         recBadge.setTypeface(null, Typeface.BOLD);
         headerRow.addView(recBadge);
 
@@ -194,25 +205,23 @@ public class RecommendationsActivity extends AppCompatActivity {
 
         cardContent.addView(headerRow);
 
-        // Tiers container hidden by default
+        // Tiers container
         LinearLayout tiersContainer = new LinearLayout(this);
         tiersContainer.setOrientation(LinearLayout.VERTICAL);
         tiersContainer.setVisibility(View.GONE);
 
-        // Divider
-        View divider = new View(this);
-        LinearLayout.LayoutParams divParams = new LinearLayout.LayoutParams(
+        View topDivider = makeDivider();
+        LinearLayout.LayoutParams tdp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 1);
-        divParams.setMargins(0, 12, 0, 12);
-        divider.setLayoutParams(divParams);
-        divider.setBackgroundColor(COLOR_DIVIDER);
-        tiersContainer.addView(divider);
+        tdp.setMargins(0, 12, 0, 8);
+        topDivider.setLayoutParams(tdp);
+        tiersContainer.addView(topDivider);
 
         List<WorkoutRecommendationEngine.WorkoutPlan> tiers = recommendation.allTiers;
         for (int i = 0; i < tiers.size(); i++) {
             boolean isRecommended = i == recommendation.recommendedTierIndex;
-            tiersContainer.addView(
-                    buildTierView(tiers.get(i), isRecommended, workoutTypeId));
+            tiersContainer.addView(buildTierView(tiers.get(i), isRecommended,
+                    workoutTypeId, i));
         }
 
         cardContent.addView(tiersContainer);
@@ -233,29 +242,36 @@ public class RecommendationsActivity extends AppCompatActivity {
     private View buildTierView(
             WorkoutRecommendationEngine.WorkoutPlan plan,
             boolean isRecommended,
-            int workoutTypeId) {
+            int workoutTypeId,
+            int tierIndex) {
+
+        // Pick background and accent color by tier
+        int bgColor     = tierIndex == 0 ? COLOR_LOW_BG
+                : tierIndex == 1 ? COLOR_MED_BG : COLOR_HIGH_BG;
+        int accentColor = tierIndex == 0 ? COLOR_LOW_ACC
+                : tierIndex == 1 ? COLOR_MED_ACC : COLOR_HIGH_ACC;
+        String tierIcon = tierIndex == 0 ? "🔵" : tierIndex == 1 ? "🟢" : "🟠";
 
         LinearLayout tierLayout = new LinearLayout(this);
         tierLayout.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
+                LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 6, 0, 6);
         tierLayout.setLayoutParams(params);
-        tierLayout.setPadding(16, 14, 16, 14);
-        tierLayout.setBackgroundColor(isRecommended ? COLOR_REC : COLOR_CARD);
+        tierLayout.setPadding(14, 14, 14, 14);
+        tierLayout.setBackgroundColor(bgColor);
 
-        // Tier name row with badge
+        // Tier header row
         LinearLayout tierHeaderRow = new LinearLayout(this);
         tierHeaderRow.setOrientation(LinearLayout.HORIZONTAL);
         tierHeaderRow.setGravity(Gravity.CENTER_VERTICAL);
 
         TextView tierName = new TextView(this);
-        tierName.setText(plan.tierName);
+        tierName.setText(tierIcon + "  " + plan.tierName);
         tierName.setTextSize(15f);
         tierName.setTypeface(null, Typeface.BOLD);
-        tierName.setTextColor(COLOR_TEXT);
+        tierName.setTextColor(accentColor);
         tierName.setLayoutParams(new LinearLayout.LayoutParams(
                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         tierHeaderRow.addView(tierName);
@@ -263,8 +279,8 @@ public class RecommendationsActivity extends AppCompatActivity {
         if (isRecommended) {
             TextView badge = new TextView(this);
             badge.setText("⭐ Recommended for you");
-            badge.setTextSize(11f);
-            badge.setTextColor(COLOR_TEXT);
+            badge.setTextSize(10f);
+            badge.setTextColor(accentColor);
             badge.setTypeface(null, Typeface.BOLD);
             tierHeaderRow.addView(badge);
         }
@@ -273,35 +289,34 @@ public class RecommendationsActivity extends AppCompatActivity {
         // Description
         TextView description = new TextView(this);
         description.setText(plan.description);
-        description.setTextSize(13f);
-        description.setTextColor(isRecommended ? COLOR_TEXT : COLOR_SUBTEXT);
-        description.setPadding(0, 6, 0, 10);
-        description.setLineSpacing(4f, 1f);
+        description.setTextSize(12f);
+        description.setTextColor(COLOR_SUBTEXT);
+        description.setPadding(0, 6, 0, 8);
+        description.setLineSpacing(3f, 1f);
         tierLayout.addView(description);
 
         // Divider before goals
-        View goalDivider = new View(this);
-        LinearLayout.LayoutParams divParams = new LinearLayout.LayoutParams(
+        View divider = makeDivider();
+        LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 1);
-        divParams.setMargins(0, 0, 0, 8);
-        goalDivider.setLayoutParams(divParams);
-        goalDivider.setBackgroundColor(COLOR_DIVIDER);
-        tierLayout.addView(goalDivider);
+        dp.setMargins(0, 0, 0, 8);
+        divider.setLayoutParams(dp);
+        tierLayout.addView(divider);
 
-        // Goals
+        // Goals — each on its own labeled row
         for (String goal : plan.goals) {
             LinearLayout goalRow = new LinearLayout(this);
             goalRow.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout.LayoutParams goalParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
-            goalParams.setMargins(0, 3, 0, 3);
-            goalRow.setLayoutParams(goalParams);
+            gp.setMargins(0, 3, 0, 3);
+            goalRow.setLayoutParams(gp);
 
             TextView bullet = new TextView(this);
             bullet.setText("•");
             bullet.setTextSize(13f);
-            bullet.setTextColor(COLOR_GREEN);
+            bullet.setTextColor(accentColor);
             bullet.setTypeface(null, Typeface.BOLD);
             bullet.setPadding(0, 0, 8, 0);
             goalRow.addView(bullet);
@@ -316,43 +331,50 @@ public class RecommendationsActivity extends AppCompatActivity {
             tierLayout.addView(goalRow);
         }
 
-        // Select button on recommended tier only
-        if (isRecommended) {
-            View buttonDivider = new View(this);
-            LinearLayout.LayoutParams bdParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, 1);
-            bdParams.setMargins(0, 12, 0, 8);
-            buttonDivider.setLayoutParams(bdParams);
-            buttonDivider.setBackgroundColor(COLOR_DIVIDER);
-            tierLayout.addView(buttonDivider);
+        // Select button on every tier (not just recommended)
+        View buttonDivider = makeDivider();
+        LinearLayout.LayoutParams bdp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 1);
+        bdp.setMargins(0, 10, 0, 8);
+        buttonDivider.setLayoutParams(bdp);
+        tierLayout.addView(buttonDivider);
 
-            Button selectButton = new Button(this);
-            selectButton.setText("▶  Start This Workout on Watch");
-            selectButton.setTextSize(13f);
-            selectButton.setTextColor(COLOR_TEXT);
-            selectButton.setTypeface(null, Typeface.BOLD);
-            selectButton.setBackgroundColor(COLOR_BUTTON);
-            LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            btnParams.setMargins(0, 4, 0, 0);
-            selectButton.setLayoutParams(btnParams);
+        Button selectButton = new Button(this);
+        String buttonLabel = tierIndex == 0 ? "▶  Start Low Intensity on Watch"
+                : tierIndex == 1 ? "▶  Start Moderate Intensity on Watch"
+                : "▶  Start High Intensity on Watch";
+        selectButton.setText(buttonLabel);
+        selectButton.setTextSize(12f);
+        selectButton.setTextColor(COLOR_TEXT);
+        selectButton.setTypeface(null, Typeface.BOLD);
 
-            selectButton.setOnClickListener(v ->
-                    sendWorkoutToWatch(workoutTypeId, plan)
-            );
+        // Button color matches tier
+        int btnColor = tierIndex == 0
+                ? Color.parseColor("#BBDEFB")
+                : tierIndex == 1 ? COLOR_BUTTON
+                : Color.parseColor("#FFE0B2");
+        selectButton.setBackgroundColor(btnColor);
 
-            tierLayout.addView(selectButton);
-        }
+        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        btnParams.setMargins(0, 2, 0, 0);
+        selectButton.setLayoutParams(btnParams);
+        selectButton.setOnClickListener(v ->
+                sendWorkoutToWatch(workoutTypeId, plan));
+        tierLayout.addView(selectButton);
 
         return tierLayout;
     }
 
-    // Sends the selected workout plan goals to the watch via Wearable Data Layer
+    private View makeDivider() {
+        View d = new View(this);
+        d.setBackgroundColor(COLOR_DIVIDER);
+        return d;
+    }
+
     private void sendWorkoutToWatch(int workoutTypeId,
                                     WorkoutRecommendationEngine.WorkoutPlan plan) {
-        // Build a compact goals string to send
-        // Format: workoutType|tierName|goal1~goal2~goal3...
         StringBuilder goalsBuilder = new StringBuilder();
         for (int i = 0; i < plan.goals.size(); i++) {
             if (i > 0) goalsBuilder.append("~");
