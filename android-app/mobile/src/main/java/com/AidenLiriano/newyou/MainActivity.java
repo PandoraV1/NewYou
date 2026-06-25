@@ -119,6 +119,10 @@ public class MainActivity extends AppCompatActivity
         predictionsButton.setOnClickListener(v ->
                 startActivity(new Intent(this, HealthPredictionsActivity.class)));
 
+        LinearLayout createWorkoutButton = findViewById(R.id.createWorkoutButton);
+        createWorkoutButton.setOnClickListener(v ->
+                startActivity(new Intent(this, CreateWorkoutActivity.class)));
+
         executor.execute(() -> {
             AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
             User user = db.appDao().getFirstUser();

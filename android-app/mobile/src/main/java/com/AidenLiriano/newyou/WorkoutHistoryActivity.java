@@ -168,22 +168,21 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
     }
 
     private void addActivityCard(Activity activity, AppDatabase db, int index) {
-        // Alternating card colors for readability
+
+        // Alternating card colors
         int cardColor = index % 2 == 0 ? COLOR_CARD : COLOR_CARD_ALT;
 
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(20, 20, 20, 20);
-        card.setBackgroundColor(cardColor);
-
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+        // Determine name and emoji
+        LinearLayout outerCard = new LinearLayout(this);
+        outerCard.setOrientation(LinearLayout.VERTICAL);
+        outerCard.setBackgroundColor(cardColor);
+        LinearLayout.LayoutParams outerParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        cardParams.setMargins(0, 0, 0, 8);
-        card.setLayoutParams(cardParams);
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        outerParams.setMargins(4, 4, 4, 8);
+        outerCard.setLayoutParams(outerParams);
+        outerCard.setPadding(16, 16, 16, 16);
 
-        // Colored left accent bar
         LinearLayout cardWithAccent = new LinearLayout(this);
         cardWithAccent.setOrientation(LinearLayout.HORIZONTAL);
         cardWithAccent.setBackgroundColor(cardColor);
@@ -200,21 +199,13 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
         cardContent.setLayoutParams(new LinearLayout.LayoutParams(
                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-        // Workout type and emoji header
-        String emoji = activity.activityType >= 1 && activity.activityType <= 8
-                ? WORKOUT_EMOJIS[activity.activityType] : "💪";
-        String workoutName = activity.activityType >= 1 && activity.activityType <= 8
-                ? WORKOUT_NAMES[activity.activityType] : "Unknown";
-
         TextView nameText = new TextView(this);
-        nameText.setText(emoji + "  " + workoutName);
         nameText.setTextSize(18f);
         nameText.setTypeface(null, Typeface.BOLD);
         nameText.setTextColor(COLOR_TEXT);
         nameText.setPadding(0, 0, 0, 4);
         cardContent.addView(nameText);
 
-        // Date
         String date = new SimpleDateFormat("EEE, MMM dd yyyy  •  hh:mm a",
                 Locale.getDefault()).format(new Date(activity.startTime));
         TextView dateText = new TextView(this);
@@ -224,7 +215,6 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
         dateText.setPadding(0, 0, 0, 8);
         cardContent.addView(dateText);
 
-        // Expand/collapse hint
         TextView expandHint = new TextView(this);
         expandHint.setText("Tap to see details  ▼");
         expandHint.setTextSize(12f);
@@ -232,24 +222,68 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
         expandHint.setTypeface(null, Typeface.ITALIC);
         cardContent.addView(expandHint);
 
-        // Detail container
         LinearLayout detailContainer = new LinearLayout(this);
         detailContainer.setOrientation(LinearLayout.VERTICAL);
         detailContainer.setVisibility(View.GONE);
+        cardContent.addView(detailContainer);
+
+        cardWithAccent.addView(accentBar);
+        cardWithAccent.addView(cardContent);
+        outerCard.addView(cardWithAccent);
+
+        outerCard.setOnClickListener(v -> {
+            if (detailContainer.getVisibility() == View.GONE) {
+                detailContainer.setVisibility(View.VISIBLE);
+                expandHint.setText("Tap to collapse  ▲");
+            } else {
+                detailContainer.setVisibility(View.GONE);
+                expandHint.setText("Tap to see details  ▼");
+            }
+        });
+
+        historyContainer.addView(outerCard);
 
         executor.execute(() -> {
+            String workoutName;
+            String emoji;
+
+            if (activity.activityType ==
+                    PhoneListenerService.CUSTOM_WORKOUT_TYPE_BASE) {
+                CustomWorkoutData cwd =
+                        db.appDao().getCustomWorkoutData(activity.activityId);
+                if (cwd != null) {
+                    CustomWorkout cw =
+                            db.appDao().getCustomWorkout(cwd.customWorkoutId);
+                    workoutName = cw != null ? cw.name : "Custom Workout";
+                } else {
+                    workoutName = "Custom Workout";
+                }
+                emoji = "🛠️";
+            } else {
+                workoutName = activity.activityType >= 1
+                        && activity.activityType <= 8
+                        ? WORKOUT_NAMES[activity.activityType] : "Unknown";
+                emoji = activity.activityType >= 1
+                        && activity.activityType <= 8
+                        ? WORKOUT_EMOJIS[activity.activityType] : "💪";
+            }
+
             String details = getDetailsForActivity(activity, db);
+            final String finalName  = workoutName;
+            final String finalEmoji = emoji;
+
             runOnUiThread(() -> {
-                // Divider before details
+                nameText.setText(finalEmoji + "  " + finalName);
+
                 View divider = new View(this);
-                LinearLayout.LayoutParams divParams = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, 1);
+                LinearLayout.LayoutParams divParams =
+                        new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT, 1);
                 divParams.setMargins(0, 12, 0, 12);
                 divider.setLayoutParams(divParams);
                 divider.setBackgroundColor(COLOR_DIVIDER);
                 detailContainer.addView(divider);
 
-                // Parse and display each detail line with its own row
                 String[] lines = details.split("\n");
                 for (String line : lines) {
                     if (line.trim().isEmpty()) continue;
@@ -257,9 +291,10 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
 
                     LinearLayout row = new LinearLayout(this);
                     row.setOrientation(LinearLayout.HORIZONTAL);
-                    LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT);
+                    LinearLayout.LayoutParams rowParams =
+                            new LinearLayout.LayoutParams(
+                                    LinearLayout.LayoutParams.MATCH_PARENT,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT);
                     rowParams.setMargins(0, 4, 0, 4);
                     row.setLayoutParams(rowParams);
 
@@ -290,40 +325,40 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
                 }
             });
         });
-
-        cardContent.addView(detailContainer);
-        cardWithAccent.addView(accentBar);
-        cardWithAccent.addView(cardContent);
-
-        // Wrap in outer card with rounded corners simulation via padding
-        LinearLayout outerCard = new LinearLayout(this);
-        outerCard.setOrientation(LinearLayout.VERTICAL);
-        outerCard.setBackgroundColor(cardColor);
-        LinearLayout.LayoutParams outerParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        outerParams.setMargins(4, 4, 4, 8);
-        outerCard.setLayoutParams(outerParams);
-        outerCard.setPadding(16, 16, 16, 16);
-        outerCard.addView(cardWithAccent);
-
-        outerCard.setOnClickListener(v -> {
-            if (detailContainer.getVisibility() == View.GONE) {
-                detailContainer.setVisibility(View.VISIBLE);
-                expandHint.setText("Tap to collapse  ▲");
-            } else {
-                detailContainer.setVisibility(View.GONE);
-                expandHint.setText("Tap to see details  ▼");
-            }
-        });
-
-        historyContainer.addView(outerCard);
     }
 
     private String getDetailsForActivity(Activity activity, AppDatabase db) {
         AppDao dao = db.appDao();
-        int id = activity.activityId;
+        int id     = activity.activityId;
         StringBuilder sb = new StringBuilder();
+
+        // Custom workout (type 100)
+        if (activity.activityType == PhoneListenerService.CUSTOM_WORKOUT_TYPE_BASE) {
+            CustomWorkoutData d = dao.getCustomWorkoutData(id);
+            if (d != null) {
+                if (d.duration > 0)
+                    sb.append("Duration: ").append(formatDuration(d.duration)).append("\n");
+                if (d.heartRate > 0)
+                    sb.append("Heart Rate: ").append(d.heartRate).append(" bpm\n");
+                if (d.calories > 0)
+                    sb.append("Calories: ").append(d.calories).append(" kcal\n");
+                if (d.stepCount > 0)
+                    sb.append("Steps: ").append(d.stepCount).append("\n");
+                if (d.distance > 0)
+                    sb.append("Distance: ").append(String.format("%.2f km", d.distance)).append("\n");
+                if (d.pace > 0)
+                    sb.append("Pace: ").append(formatPace(d.pace)).append("\n");
+                if (d.speed > 0)
+                    sb.append("Speed: ").append(String.format("%.1f km/h", d.speed)).append("\n");
+                if (d.elevationGain > 0)
+                    sb.append("Elevation Gain: ").append(
+                            String.format("%.1f m", d.elevationGain)).append("\n");
+                if (d.laps > 0)
+                    sb.append("Laps: ").append(d.laps);
+            }
+            return sb.length() == 0 ? "No detail data recorded." : sb.toString().trim();
+        }
+
         switch (activity.activityType) {
             case 1: {
                 RunningData d = dao.getRunningData(id);

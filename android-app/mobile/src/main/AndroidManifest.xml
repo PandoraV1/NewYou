@@ -12,7 +12,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NewYou">
 
-        <!-- Splash is now the entry point -->
         <activity
             android:name=".SplashActivity"
             android:exported="true"
@@ -50,6 +49,10 @@
 
         <activity
             android:name=".HealthPredictionsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".CreateWorkoutActivity"
             android:exported="false" />
 
         <service

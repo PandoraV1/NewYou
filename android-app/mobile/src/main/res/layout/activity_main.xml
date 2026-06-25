@@ -140,6 +140,44 @@
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
+                <!-- Create Workout button -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#FFFADC">
+
+                    <LinearLayout
+                        android:id="@+id/createWorkoutButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="🛠️ Create Custom Workout"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#1C1C1E"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Build a personalised workout and track it on your watch →"
+                            android:textSize="13sp"
+                            android:textColor="#1C1C1E" />
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
                 <!-- Health Overview Card -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"

@@ -1,7 +1,9 @@
 package com.AidenLiriano.newyou;
 
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import java.util.List;
 
@@ -537,4 +539,32 @@ public interface AppDao {
             "(SELECT activity_id FROM activities WHERE user_id = :userId " +
             "AND start_time >= :fromTime)")
     long getYogaDurationFrom(int userId, long fromTime);
+
+    // Custom workouts
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    long insertCustomWorkout(CustomWorkout workout);
+
+    @Query("SELECT * FROM custom_workouts WHERE userId = :userId ORDER BY createdAt DESC")
+    List<CustomWorkout> getCustomWorkoutsForUser(int userId);
+
+    @Query("SELECT * FROM custom_workouts WHERE id = :id")
+    CustomWorkout getCustomWorkout(int id);
+
+    @Delete
+    void deleteCustomWorkout(CustomWorkout workout);
+
+    // Custom workout data
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    long insertCustomWorkoutData(CustomWorkoutData data);
+
+    @Query("SELECT * FROM custom_workout_data WHERE activityId = :activityId")
+    CustomWorkoutData getCustomWorkoutData(int activityId);
+
+    @Query("UPDATE custom_workout_data SET duration=:duration, heartRate=:heartRate, " +
+            "calories=:calories, stepCount=:stepCount, distance=:distance, " +
+            "pace=:pace, speed=:speed, elevationGain=:elevGain, " +
+            "elevationLoss=:elevLoss, laps=:laps WHERE activityId=:activityId")
+    void updateCustomWorkoutData(int activityId, long duration, int heartRate,
+                                 int calories, int stepCount, float distance, float pace, float speed,
+                                 float elevGain, float elevLoss, int laps);
 }
