@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Main content -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -29,19 +28,19 @@
                 android:text="New You"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="#1C1C1E" />
+                android:textColor="#1C1C1E"
+                android:letterSpacing="0.01" />
 
             <TextView
                 android:id="@+id/statusText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Waiting for Watch..."
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textColor="#1C1C1E" />
 
         </LinearLayout>
 
-        <!-- Scrollable content -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -72,150 +71,266 @@
                     android:layout_marginBottom="12dp"
                     android:visibility="gone" />
 
-                <!-- Recommendations button -->
+                <!-- QUICK ACTIONS section -->
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="QUICK ACTIONS"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#7A7560"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginStart="4dp" />
+
+                <!-- All three nav cards grouped in one card -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
+                    android:layout_marginBottom="20dp"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="3dp"
                     app:cardBackgroundColor="#FFFADC">
+
                     <LinearLayout
-                        android:id="@+id/recommendationsButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground">
-                        <TextView
+                        android:orientation="vertical">
+
+                        <!-- Recommendations -->
+                        <LinearLayout
+                            android:id="@+id/recommendationsButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="💡 Workout Recommendations"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="#1C1C1E"
-                            android:layout_marginBottom="4dp" />
-                        <TextView
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:padding="16dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground">
+
+                            <TextView
+                                android:layout_width="36dp"
+                                android:layout_height="wrap_content"
+                                android:text="💡"
+                                android:textSize="22sp"
+                                android:gravity="center"
+                                android:layout_marginEnd="14dp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Workout Recommendations"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#1C1C1E" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Personalised workouts based on your data"
+                                    android:textSize="12sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginTop="2dp" />
+
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="❯"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:textColor="#7DB800"
+                                android:layout_marginStart="8dp" />
+
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#EDE6B8" />
+
+                        <!-- Predictions -->
+                        <LinearLayout
+                            android:id="@+id/predictionsButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Tap to see personalized workouts based on your data →"
-                            android:textSize="13sp"
-                            android:textColor="#1C1C1E" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:padding="16dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground">
+
+                            <TextView
+                                android:layout_width="36dp"
+                                android:layout_height="wrap_content"
+                                android:text="🔮"
+                                android:textSize="22sp"
+                                android:gravity="center"
+                                android:layout_marginEnd="14dp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Health Predictions"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#1C1C1E" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="See where your health is headed in 1, 6 and 12 months"
+                                    android:textSize="12sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginTop="2dp" />
+
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="❯"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:textColor="#7DB800"
+                                android:layout_marginStart="8dp" />
+
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#EDE6B8" />
+
+                        <!-- Create Custom Workout -->
+                        <LinearLayout
+                            android:id="@+id/createWorkoutButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:padding="16dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground">
+
+                            <TextView
+                                android:layout_width="36dp"
+                                android:layout_height="wrap_content"
+                                android:text="🛠️"
+                                android:textSize="22sp"
+                                android:gravity="center"
+                                android:layout_marginEnd="14dp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Create Custom Workout"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#1C1C1E" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Build a workout and track it on your watch"
+                                    android:textSize="12sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginTop="2dp" />
+
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="❯"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:textColor="#7DB800"
+                                android:layout_marginStart="8dp" />
+
+                        </LinearLayout>
+
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Predictions button -->
+                <!-- HEALTH OVERVIEW section -->
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="HEALTH OVERVIEW"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#7A7560"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginStart="4dp" />
+
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout
-                        android:id="@+id/predictionsButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="🔮 Health Predictions"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="#1C1C1E"
-                            android:layout_marginBottom="4dp" />
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="See where your health is headed in 1, 6, and 12 months →"
-                            android:textSize="13sp"
-                            android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Create Workout button -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
+                    android:layout_marginBottom="20dp"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="3dp"
                     app:cardBackgroundColor="#FFFADC">
 
-                    <LinearLayout
-                        android:id="@+id/createWorkoutButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="🛠️ Create Custom Workout"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="#1C1C1E"
-                            android:layout_marginBottom="4dp" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Build a personalised workout and track it on your watch →"
-                            android:textSize="13sp"
-                            android:textColor="#1C1C1E" />
-
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Health Overview Card -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFADC">
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="16dp">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="🏥 Health Overview"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="#1C1C1E"
-                            android:layout_marginBottom="12dp" />
+                        android:padding="18dp">
+
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
                             android:gravity="center_vertical">
+
                             <com.AidenLiriano.newyou.HealthOverviewView
                                 android:id="@+id/healthOverviewRings"
-                                android:layout_width="160dp"
-                                android:layout_height="160dp" />
+                                android:layout_width="150dp"
+                                android:layout_height="150dp" />
+
                             <LinearLayout
                                 android:id="@+id/healthOverviewLegend"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:orientation="vertical"
-                                android:paddingLeft="16dp" />
+                                android:paddingStart="16dp" />
+
                         </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#EDE6B8"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginBottom="12dp" />
+
                         <TextView
                             android:id="@+id/healthOverviewMessage"
                             android:layout_width="match_parent"
@@ -223,280 +338,437 @@
                             android:text=""
                             android:textSize="13sp"
                             android:textColor="#555555"
-                            android:layout_marginTop="12dp"
-                            android:lineSpacingExtra="4dp" />
+                            android:lineSpacingExtra="6dp" />
+
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- STAT BOX: Overall Summary -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Overall Summary"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="#1C1C1E"
-                            android:layout_marginBottom="8dp" />
-                        <TextView
-                            android:id="@+id/statTotalWorkouts"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Total Workouts: --"
-                            android:textSize="14sp"
-                            android:textColor="#1C1C1E" />
-                        <TextView
-                            android:id="@+id/statWeeksTracked"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Weeks Tracked: --"
-                            android:textSize="14sp"
-                            android:textColor="#1C1C1E" />
-                        <TextView
-                            android:id="@+id/statAvgWorkoutsPerWeek"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Avg Workouts/Week: --"
-                            android:textSize="14sp"
-                            android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
+                <!-- ACTIVITY SUMMARY section -->
 
-                <!-- STAT BOX: Heart Rate -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="❤️ Average Heart Rate"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="#1C1C1E"
-                            android:layout_marginBottom="8dp" />
-                        <TextView
-                            android:id="@+id/statAvgHROverall"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Overall Avg: -- bpm"
-                            android:textSize="18sp"
-                            android:textColor="#E53935"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="8dp" />
-                        <TextView
-                            android:id="@+id/statHRByActivity"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Loading..."
-                            android:textSize="13sp"
-                            android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- STAT BOX: Calories -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="🔥 Calories Burned"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="#1C1C1E"
-                            android:layout_marginBottom="8dp" />
-                        <TextView
-                            android:id="@+id/statAvgCaloriesOverall"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Avg Per Session: -- kcal"
-                            android:textSize="18sp"
-                            android:textColor="#FF6F00"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="8dp" />
-                        <TextView
-                            android:id="@+id/statCaloriesByActivity"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Loading..."
-                            android:textSize="13sp"
-                            android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- STAT BOX: Time -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="⏱️ Time Active"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="#1C1C1E"
-                            android:layout_marginBottom="8dp" />
-                        <TextView
-                            android:id="@+id/statAvgTimePerSession"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Avg Session: --"
-                            android:textSize="18sp"
-                            android:textColor="#1565C0"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="4dp" />
-                        <TextView
-                            android:id="@+id/statAvgTimePerWeek"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Avg Per Week: --"
-                            android:textSize="14sp"
-                            android:textColor="#1C1C1E"
-                            android:layout_marginBottom="8dp" />
-                        <TextView
-                            android:id="@+id/statTimeByActivity"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Loading..."
-                            android:textSize="13sp"
-                            android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- STAT BOX: Running -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🏃 Running" android:textSize="16sp" android:textStyle="bold" android:textColor="#1C1C1E" android:layout_marginBottom="8dp" />
-                        <TextView android:id="@+id/statRunning" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="13sp" android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- STAT BOX: Swimming -->
-                <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🏊 Swimming" android:textSize="16sp" android:textStyle="bold" android:textColor="#1C1C1E" android:layout_marginBottom="8dp" />
-                        <TextView android:id="@+id/statSwimming" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="13sp" android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- STAT BOX: Biking -->
-                <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🚴 Biking" android:textSize="16sp" android:textStyle="bold" android:textColor="#1C1C1E" android:layout_marginBottom="8dp" />
-                        <TextView android:id="@+id/statBiking" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="13sp" android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- STAT BOX: Walking -->
-                <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🚶 Walking" android:textSize="16sp" android:textStyle="bold" android:textColor="#1C1C1E" android:layout_marginBottom="8dp" />
-                        <TextView android:id="@+id/statWalking" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="13sp" android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- STAT BOX: Hiking -->
-                <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🥾 Hiking" android:textSize="16sp" android:textStyle="bold" android:textColor="#1C1C1E" android:layout_marginBottom="8dp" />
-                        <TextView android:id="@+id/statHiking" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="13sp" android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- STAT BOX: Meditation -->
-                <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🧘 Meditation" android:textSize="16sp" android:textStyle="bold" android:textColor="#1C1C1E" android:layout_marginBottom="8dp" />
-                        <TextView android:id="@+id/statMeditation" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="13sp" android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- STAT BOX: Strength -->
-                <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🏋️ Strength Training" android:textSize="16sp" android:textStyle="bold" android:textColor="#1C1C1E" android:layout_marginBottom="8dp" />
-                        <TextView android:id="@+id/statStrength" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="13sp" android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- STAT BOX: Yoga -->
-                <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="#FFFADC">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🧘 Yoga" android:textSize="16sp" android:textStyle="bold" android:textColor="#1C1C1E" android:layout_marginBottom="8dp" />
-                        <TextView android:id="@+id/statYoga" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="13sp" android:textColor="#1C1C1E" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Charts section -->
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="📈 Your Progress Charts"
-                    android:textSize="18sp"
+                    android:text="ACTIVITY SUMMARY"
+                    android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="#1C1C1E"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp" />
+                    android:textColor="#7A7560"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginStart="4dp" />
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="3dp"
+                    app:cardBackgroundColor="#FFFADC">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- Overall row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="📊  Overall"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:textColor="#1C1C1E"
+                                android:layout_marginBottom="10dp" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="6dp">
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Total Workouts"
+                                    android:textSize="13sp"
+                                    android:textColor="#666666" />
+                                <TextView
+                                    android:id="@+id/statTotalWorkouts"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="--"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#1C1C1E" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="6dp">
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Weeks Tracked"
+                                    android:textSize="13sp"
+                                    android:textColor="#666666" />
+                                <TextView
+                                    android:id="@+id/statWeeksTracked"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="--"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#1C1C1E" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Avg Workouts / Week"
+                                    android:textSize="13sp"
+                                    android:textColor="#666666" />
+                                <TextView
+                                    android:id="@+id/statAvgWorkoutsPerWeek"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="--"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#1C1C1E" />
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EDE6B8" />
+
+                        <!-- Heart Rate row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="❤️  Heart Rate"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:textColor="#1C1C1E"
+                                android:layout_marginBottom="10dp" />
+
+                            <TextView
+                                android:id="@+id/statAvgHROverall"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Overall Avg: -- bpm"
+                                android:textSize="18sp"
+                                android:textColor="#E53935"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="8dp" />
+
+                            <TextView
+                                android:id="@+id/statHRByActivity"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Loading..."
+                                android:textSize="13sp"
+                                android:textColor="#666666"
+                                android:lineSpacingExtra="5dp" />
+
+                        </LinearLayout>
+
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EDE6B8" />
+
+                        <!-- Calories row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="🔥  Calories"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:textColor="#1C1C1E"
+                                android:layout_marginBottom="10dp" />
+
+                            <TextView
+                                android:id="@+id/statAvgCaloriesOverall"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Avg Per Session: -- kcal"
+                                android:textSize="18sp"
+                                android:textColor="#FF6F00"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="8dp" />
+
+                            <TextView
+                                android:id="@+id/statCaloriesByActivity"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Loading..."
+                                android:textSize="13sp"
+                                android:textColor="#666666"
+                                android:lineSpacingExtra="5dp" />
+
+                        </LinearLayout>
+
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EDE6B8" />
+
+                        <!-- Time row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="⏱️  Time Active"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:textColor="#1C1C1E"
+                                android:layout_marginBottom="10dp" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="4dp">
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Avg Session"
+                                    android:textSize="13sp"
+                                    android:textColor="#666666" />
+                                <TextView
+                                    android:id="@+id/statAvgTimePerSession"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="--"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#1565C0" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="8dp">
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Avg Per Week"
+                                    android:textSize="13sp"
+                                    android:textColor="#666666" />
+                                <TextView
+                                    android:id="@+id/statAvgTimePerWeek"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="--"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#1C1C1E" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/statTimeByActivity"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Loading..."
+                                android:textSize="13sp"
+                                android:textColor="#666666"
+                                android:lineSpacingExtra="5dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- BY ACTIVITY section -->
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="BY ACTIVITY"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#7A7560"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginStart="4dp" />
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="3dp"
+                    app:cardBackgroundColor="#FFFADC">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="6dp">
+
+                        <!-- Running -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:padding="12dp">
+                            <TextView
+                                android:layout_width="36dp"
+                                android:layout_height="wrap_content"
+                                android:text="🏃"
+                                android:textSize="18sp" />
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Running"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#1C1C1E" />
+                                <TextView
+                                    android:id="@+id/statRunning"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="No sessions yet"
+                                    android:textSize="12sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginTop="2dp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EDE6B8" />
+
+                        <!-- Swimming -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp">
+                            <TextView android:layout_width="36dp" android:layout_height="wrap_content" android:text="🏊" android:textSize="18sp" />
+                            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Swimming" android:textSize="14sp" android:textStyle="bold" android:textColor="#1C1C1E" />
+                                <TextView android:id="@+id/statSwimming" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="2dp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EDE6B8" />
+
+                        <!-- Biking -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp">
+                            <TextView android:layout_width="36dp" android:layout_height="wrap_content" android:text="🚴" android:textSize="18sp" />
+                            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Biking" android:textSize="14sp" android:textStyle="bold" android:textColor="#1C1C1E" />
+                                <TextView android:id="@+id/statBiking" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="2dp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EDE6B8" />
+
+                        <!-- Walking -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp">
+                            <TextView android:layout_width="36dp" android:layout_height="wrap_content" android:text="🚶" android:textSize="18sp" />
+                            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Walking" android:textSize="14sp" android:textStyle="bold" android:textColor="#1C1C1E" />
+                                <TextView android:id="@+id/statWalking" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="2dp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EDE6B8" />
+
+                        <!-- Hiking -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp">
+                            <TextView android:layout_width="36dp" android:layout_height="wrap_content" android:text="🥾" android:textSize="18sp" />
+                            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Hiking" android:textSize="14sp" android:textStyle="bold" android:textColor="#1C1C1E" />
+                                <TextView android:id="@+id/statHiking" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="2dp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EDE6B8" />
+
+                        <!-- Meditation -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp">
+                            <TextView android:layout_width="36dp" android:layout_height="wrap_content" android:text="🧘" android:textSize="18sp" />
+                            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Meditation" android:textSize="14sp" android:textStyle="bold" android:textColor="#1C1C1E" />
+                                <TextView android:id="@+id/statMeditation" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="2dp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EDE6B8" />
+
+                        <!-- Strength -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp">
+                            <TextView android:layout_width="36dp" android:layout_height="wrap_content" android:text="🏋️" android:textSize="18sp" />
+                            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Strength Training" android:textSize="14sp" android:textStyle="bold" android:textColor="#1C1C1E" />
+                                <TextView android:id="@+id/statStrength" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="2dp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EDE6B8" />
+
+                        <!-- Yoga -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp">
+                            <TextView android:layout_width="36dp" android:layout_height="wrap_content" android:text="🧘" android:textSize="18sp" />
+                            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Yoga" android:textSize="14sp" android:textStyle="bold" android:textColor="#1C1C1E" />
+                                <TextView android:id="@+id/statYoga" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No sessions yet" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="2dp" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- PROGRESS CHARTS section -->
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="YOUR PROGRESS"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#7A7560"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginStart="4dp" />
 
                 <LinearLayout
                     android:id="@+id/chartsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical" />
+                    android:orientation="vertical"
+                    android:layout_marginBottom="16dp" />
 
             </LinearLayout>
         </ScrollView>
 
-        <!-- Nav bar -->
         <include layout="@layout/nav_bar" />
 
     </LinearLayout>
 
-    <!-- Confetti overlay — rendered on top of everything -->
+    <!-- Confetti overlay -->
     <com.AidenLiriano.newyou.ConfettiView
         android:id="@+id/confettiView"
         android:layout_width="match_parent"

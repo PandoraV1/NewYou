@@ -7,6 +7,7 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.List;
 
 public class PhoneListenerService extends WearableListenerService {
 
@@ -20,11 +21,10 @@ public class PhoneListenerService extends WearableListenerService {
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
-        String path        = messageEvent.getPath();
+        String path         = messageEvent.getPath();
         String sourceNodeId = messageEvent.getSourceNodeId();
         Log.d(TAG, "Message received: " + path);
 
-        // --- Workout STARTED ---
         if (path.startsWith("/workout/")) {
             try {
                 int typeId = Integer.parseInt(path.replace("/workout/", ""));
@@ -59,7 +59,6 @@ public class PhoneListenerService extends WearableListenerService {
                                 (int) activityId, customWorkoutId);
                         dao.insertCustomWorkoutData(cwd);
                     } else {
-                        // Insert built-in workout data placeholder
                         switch (typeId) {
                             case 1: dao.insertRunningData(new RunningData((int) activityId)); break;
                             case 2: dao.insertSwimmingData(new SwimmingData((int) activityId)); break;
@@ -90,7 +89,6 @@ public class PhoneListenerService extends WearableListenerService {
             }
         }
 
-        // --- Live Update ---
         else if (path.startsWith("/workout_live/")) {
             try {
                 String[] p = path.replace("/workout_live/", "").split("/");
@@ -122,7 +120,6 @@ public class PhoneListenerService extends WearableListenerService {
             }
         }
 
-        // --- Workout STOPPED ---
         else if (path.startsWith("/workout_stop/")) {
             try {
                 String[] p = path.replace("/workout_stop/", "").split("/");
@@ -216,6 +213,55 @@ public class PhoneListenerService extends WearableListenerService {
             } catch (Exception e) {
                 Log.e(TAG, "Failed to parse workout stop: " + path, e);
             }
+        }
+
+        else if (path.equals("/request_custom_workouts")) {
+            Log.d(TAG, "Watch requested custom workouts");
+            executor.execute(() -> {
+                AppDatabase db   = AppDatabase.getDatabase(getApplicationContext());
+                AppDao dao       = db.appDao();
+                User user        = dao.getFirstUser();
+                if (user == null) {
+                    Log.e(TAG, "No user found, cannot send custom workouts");
+                    return;
+                }
+
+                List<CustomWorkout> workouts =
+                        dao.getCustomWorkoutsForUser(user.userId);
+
+                String payload;
+                if (workouts == null || workouts.isEmpty()) {
+                    payload = "NONE";
+                } else {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < workouts.size(); i++) {
+                        CustomWorkout cw = workouts.get(i);
+                        if (i > 0) sb.append(";");
+                        sb.append(cw.name).append("|")
+                                .append(cw.iconIndex).append("|")
+                                .append(cw.trackSteps     ? "1" : "0").append("|")
+                                .append(cw.trackDistance  ? "1" : "0").append("|")
+                                .append(cw.trackElevation ? "1" : "0").append("|")
+                                .append(cw.trackLaps      ? "1" : "0").append("|")
+                                .append(cw.trackSpeed     ? "1" : "0").append("|")
+                                .append(cw.id);
+                    }
+                    payload = sb.toString();
+                }
+
+                Log.d(TAG, "Sending custom workouts to watch: " + payload);
+
+                Wearable.getMessageClient(getApplicationContext())
+                        .sendMessage(
+                                sourceNodeId,
+                                "/custom_workouts_data",
+                                payload.getBytes()
+                        )
+                        .addOnSuccessListener(i ->
+                                Log.d(TAG, "Custom workouts sent successfully"))
+                        .addOnFailureListener(e ->
+                                Log.e(TAG, "Failed to send custom workouts", e));
+            });
         }
     }
 

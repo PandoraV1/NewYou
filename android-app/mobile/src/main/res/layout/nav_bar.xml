@@ -1,44 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/navBar"
     android:layout_width="match_parent"
-    android:layout_height="56dp"
+    android:layout_height="64dp"
     android:orientation="horizontal"
     android:background="#98CD00"
     android:elevation="8dp">
 
-    <ImageButton
+    <!-- History button -->
+    <LinearLayout
         android:id="@+id/navHistory"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:src="@drawable/history_svgrepo_com__1_"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="History"
-        android:tint="#1C1C1E"
-        android:scaleType="center" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
 
-    <ImageButton
+        <ImageView
+            android:id="@+id/navHistoryIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/history_svgrepo_com__1_"
+            android:tint="#1C1C1E"
+            android:scaleType="fitCenter"
+            android:contentDescription="History" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="History"
+            android:textSize="10sp"
+            android:textColor="#1C1C1E"
+            android:layout_marginTop="3dp" />
+
+    </LinearLayout>
+
+    <!-- Vertical divider -->
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="#7DB800" />
+
+    <!-- Home button -->
+    <LinearLayout
         android:id="@+id/navHome"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:src="@drawable/home_svgrepo_com"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Home"
-        android:tint="#1C1C1E"
-        android:scaleType="center" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
 
-    <ImageButton
+        <ImageView
+            android:id="@+id/navHomeIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            app:srcCompat="@drawable/home_svgrepo_com"
+            android:tint="#1C1C1E"
+            android:scaleType="fitCenter"
+            android:contentDescription="Home" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Home"
+            android:textSize="10sp"
+            android:textColor="#1C1C1E"
+            android:layout_marginTop="3dp" />
+
+    </LinearLayout>
+
+    <!-- Vertical divider -->
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="#7DB800" />
+
+    <!-- Settings button -->
+    <LinearLayout
         android:id="@+id/navSettings"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:src="@drawable/settings_svgrepo_com"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Settings"
-        android:tint="#1C1C1E"
-        android:scaleType="center" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
+
+        <ImageView
+            android:id="@+id/navSettingsIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            app:srcCompat="@drawable/settings_svgrepo_com"
+            android:tint="#1C1C1E"
+            android:scaleType="fitCenter"
+            android:contentDescription="Settings" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textSize="10sp"
+            android:textColor="#1C1C1E"
+            android:layout_marginTop="3dp" />
+
+    </LinearLayout>
 
 </LinearLayout>

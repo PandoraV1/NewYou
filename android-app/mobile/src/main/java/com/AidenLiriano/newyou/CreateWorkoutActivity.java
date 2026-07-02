@@ -2,11 +2,10 @@ package com.AidenLiriano.newyou;
 
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.Gravity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,9 +15,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.Wearable;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.List;
 
 public class CreateWorkoutActivity extends AppCompatActivity {
 
@@ -30,6 +31,7 @@ public class CreateWorkoutActivity extends AppCompatActivity {
     private ImageView previewIcon;
     private TextView previewName;
     private TextView previewFeatures;
+    private Button createWorkoutButton;
 
     private SwitchCompat toggleSteps;
     private SwitchCompat toggleDistance;
@@ -41,7 +43,8 @@ public class CreateWorkoutActivity extends AppCompatActivity {
     private int selectedIconIndex = 0;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    // Icon resources and names — uses existing workout icons
+    private boolean isSubmitting = false;
+
     private static final int[] ICON_RES = {
             R.drawable.ic_running,
             R.drawable.ic_swimming,
@@ -61,7 +64,6 @@ public class CreateWorkoutActivity extends AppCompatActivity {
     private static final int COLOR_SELECTED = Color.parseColor("#98CD00");
     private static final int COLOR_NORMAL   = Color.parseColor("#FFFADC");
     private static final int COLOR_TEXT     = Color.parseColor("#1C1C1E");
-    private static final int COLOR_GREEN    = Color.parseColor("#B6F500");
 
     private final ImageView[] iconViews = new ImageView[8];
 
@@ -70,14 +72,15 @@ public class CreateWorkoutActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_workout);
 
-        workoutNameInput  = findViewById(R.id.workoutNameInput);
-        nameCharCount     = findViewById(R.id.nameCharCount);
-        iconGridRow1      = findViewById(R.id.iconGridRow1);
-        iconGridRow2      = findViewById(R.id.iconGridRow2);
-        selectedIconLabel = findViewById(R.id.selectedIconLabel);
-        previewIcon       = findViewById(R.id.previewIcon);
-        previewName       = findViewById(R.id.previewName);
-        previewFeatures   = findViewById(R.id.previewFeatures);
+        workoutNameInput    = findViewById(R.id.workoutNameInput);
+        nameCharCount       = findViewById(R.id.nameCharCount);
+        iconGridRow1        = findViewById(R.id.iconGridRow1);
+        iconGridRow2        = findViewById(R.id.iconGridRow2);
+        selectedIconLabel   = findViewById(R.id.selectedIconLabel);
+        previewIcon         = findViewById(R.id.previewIcon);
+        previewName         = findViewById(R.id.previewName);
+        previewFeatures     = findViewById(R.id.previewFeatures);
+        createWorkoutButton = findViewById(R.id.createWorkoutButton);
 
         toggleSteps     = findViewById(R.id.toggleSteps);
         toggleDistance  = findViewById(R.id.toggleDistance);
@@ -90,7 +93,6 @@ public class CreateWorkoutActivity extends AppCompatActivity {
         setupListeners();
         updatePreview();
 
-        // If distance is off, force pace and speed off too
         toggleDistance.setOnCheckedChangeListener((btn, checked) -> {
             if (!checked) {
                 togglePace.setChecked(false);
@@ -99,7 +101,7 @@ public class CreateWorkoutActivity extends AppCompatActivity {
             updatePreview();
         });
 
-        findViewById(R.id.createWorkoutButton).setOnClickListener(v -> attemptCreate());
+        createWorkoutButton.setOnClickListener(v -> attemptCreate());
         findViewById(R.id.cancelButton).setOnClickListener(v -> finish());
     }
 
@@ -121,10 +123,7 @@ public class CreateWorkoutActivity extends AppCompatActivity {
             icon.setBackgroundColor(i == 0 ? COLOR_SELECTED : COLOR_NORMAL);
             icon.setClickable(true);
             icon.setFocusable(true);
-
-            icon.setOnClickListener(v -> {
-                selectIcon(index);
-            });
+            icon.setOnClickListener(v -> selectIcon(index));
 
             iconViews[i] = icon;
 
@@ -177,6 +176,11 @@ public class CreateWorkoutActivity extends AppCompatActivity {
     }
 
     private void attemptCreate() {
+        if (isSubmitting) {
+            Log.d("CreateWorkout", "Submission already in progress, ignoring tap");
+            return;
+        }
+
         String name = workoutNameInput.getText().toString().trim();
 
         if (name.isEmpty()) {
@@ -184,12 +188,16 @@ public class CreateWorkoutActivity extends AppCompatActivity {
             workoutNameInput.requestFocus();
             return;
         }
-
         if (name.length() < 2) {
             workoutNameInput.setError("Name must be at least 2 characters");
             workoutNameInput.requestFocus();
             return;
         }
+
+        isSubmitting = true;
+        createWorkoutButton.setEnabled(false);
+        createWorkoutButton.setAlpha(0.6f);
+        createWorkoutButton.setText("Creating...");
 
         boolean trackSteps     = toggleSteps.isChecked();
         boolean trackDistance  = toggleDistance.isChecked();
@@ -204,7 +212,7 @@ public class CreateWorkoutActivity extends AppCompatActivity {
             User user        = dao.getFirstUser();
             int userId       = user != null ? user.userId : 1;
 
-            // Check if a workout with this name already exists for this user
+            // Check for duplicate name before inserting
             List<CustomWorkout> existing = dao.getCustomWorkoutsForUser(userId);
             for (CustomWorkout cw : existing) {
                 if (cw.name.equalsIgnoreCase(name)) {
@@ -212,6 +220,7 @@ public class CreateWorkoutActivity extends AppCompatActivity {
                         workoutNameInput.setError(
                                 "You already have a workout named \"" + name + "\"");
                         workoutNameInput.requestFocus();
+                        resetSubmitState();
                     });
                     return;
                 }
@@ -225,7 +234,44 @@ public class CreateWorkoutActivity extends AppCompatActivity {
                     trackElevation, trackLaps
             );
 
-            dao.insertCustomWorkout(workout);
+            long newId = dao.insertCustomWorkout(workout);
+            Log.d("CreateWorkout", "Saved custom workout with id: " + newId);
+
+            List<CustomWorkout> allWorkouts = dao.getCustomWorkoutsForUser(userId);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < allWorkouts.size(); i++) {
+                CustomWorkout cw = allWorkouts.get(i);
+                if (i > 0) sb.append(";");
+                sb.append(cw.name).append("|")
+                        .append(cw.iconIndex).append("|")
+                        .append(cw.trackSteps     ? "1" : "0").append("|")
+                        .append(cw.trackDistance  ? "1" : "0").append("|")
+                        .append(cw.trackElevation ? "1" : "0").append("|")
+                        .append(cw.trackLaps      ? "1" : "0").append("|")
+                        .append(cw.trackSpeed     ? "1" : "0").append("|")
+                        .append(cw.id);
+            }
+            final String payload = sb.toString();
+
+            Wearable.getNodeClient(getApplicationContext())
+                    .getConnectedNodes()
+                    .addOnSuccessListener(nodes -> {
+                        for (Node node : nodes) {
+                            Wearable.getMessageClient(getApplicationContext())
+                                    .sendMessage(node.getId(),
+                                            "/custom_workouts_data",
+                                            payload.getBytes())
+                                    .addOnSuccessListener(i ->
+                                            Log.d("CreateWorkout",
+                                                    "Pushed workout list to watch: "
+                                                            + node.getDisplayName()))
+                                    .addOnFailureListener(e ->
+                                            Log.e("CreateWorkout",
+                                                    "Failed to push to watch", e));
+                        }
+                    })
+                    .addOnFailureListener(e ->
+                            Log.e("CreateWorkout", "Failed to get connected nodes", e));
 
             runOnUiThread(() -> {
                 Toast.makeText(this,
@@ -234,5 +280,12 @@ public class CreateWorkoutActivity extends AppCompatActivity {
                 finish();
             });
         });
+    }
+
+    private void resetSubmitState() {
+        isSubmitting = false;
+        createWorkoutButton.setEnabled(true);
+        createWorkoutButton.setAlpha(1f);
+        createWorkoutButton.setText("✅  Create Workout");
     }
 }
