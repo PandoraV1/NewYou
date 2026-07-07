@@ -4,84 +4,104 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.os.PowerManager
+import androidx.core.app.NotificationCompat
+import com.AidenLiriano.newyou.R
 
 class WorkoutTrackingService : Service() {
 
-    private var wakeLock: PowerManager.WakeLock? = null
-
     companion object {
-        const val CHANNEL_ID = "workout_tracking_channel"
-        const val NOTIFICATION_ID = 1
+        const val ACTION_START = "ACTION_START"
+        const val ACTION_STOP  = "ACTION_STOP"
+        const val CHANNEL_ID   = "workout_tracking_channel"
 
-        const val ACTION_START = "ACTION_START_TRACKING"
-        const val ACTION_STOP  = "ACTION_STOP_TRACKING"
+        const val EXTRA_TRACK_STEPS     = "track_steps"
+        const val EXTRA_TRACK_ELEVATION = "track_elevation"
+        const val EXTRA_TRACK_GPS       = "track_gps"
 
-        // Shared sensor helper, MainActivity and the service both reference this
         var sensorHelper: SensorManagerHelper? = null
     }
 
-    override fun onCreate() {
-        super.onCreate()
-        createNotificationChannel()
-    }
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startTracking()
-            ACTION_STOP  -> stopTracking()
+            ACTION_START -> {
+                createNotificationChannel()
+                startForeground(1, buildNotification())
+                acquireWakeLock()
+
+                val trackSteps     = intent.getBooleanExtra(EXTRA_TRACK_STEPS, false)
+                val trackElevation = intent.getBooleanExtra(EXTRA_TRACK_ELEVATION, false)
+                val trackGps       = intent.getBooleanExtra(EXTRA_TRACK_GPS, false)
+
+                sensorHelper?.startTracking(
+                    trackHeartRate  = true,
+                    trackSteps      = trackSteps,
+                    trackElevation  = trackElevation,
+                    trackGps        = trackGps
+                )
+            }
+            ACTION_STOP -> {
+                sensorHelper?.stopTracking()
+                releaseWakeLock()
+                stopForeground(true)
+                stopSelf()
+            }
         }
         return START_STICKY
-    }
-
-    private fun startTracking() {
-        // Acquire wake lock to keep CPU running while screen is off
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock = powerManager.newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK,
-            "NewYou::WorkoutWakeLock"
-        )
-        wakeLock?.acquire(6 * 60 * 60 * 1000L) // Max 6 hours
-
-        startForeground(NOTIFICATION_ID, buildNotification())
-    }
-
-    private fun stopTracking() {
-        wakeLock?.let {
-            if (it.isHeld) it.release()
-        }
-        wakeLock = null
-        stopForeground(true)
-        stopSelf()
-    }
-
-    private fun buildNotification(): Notification {
-        return Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("New You")
-            .setContentText("Workout in progress...")
-            .setSmallIcon(android.R.drawable.ic_media_play)
-            .setOngoing(true)
-            .build()
-    }
-
-    private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "Workout Tracking",
-            NotificationManager.IMPORTANCE_LOW
-        )
-        channel.description = "Keeps workout tracking active while screen is off"
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(channel)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
         super.onDestroy()
-        wakeLock?.let { if (it.isHeld) it.release() }
+        sensorHelper?.stopTracking()
+        releaseWakeLock()
+    }
+
+    private fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "NewYou::WorkoutWakeLock"
+        )
+        wakeLock?.acquire(3 * 60 * 60 * 1000L)
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            if (wakeLock?.isHeld == true) wakeLock?.release()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        wakeLock = null
+    }
+
+    private fun buildNotification(): Notification {
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Workout in Progress")
+            .setContentText("New You is tracking your workout")
+            .setSmallIcon(R.drawable.ic_running)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+    }
+
+    private fun createNotificationChannel() {
+        val manager = getSystemService(NotificationManager::class.java)
+            ?: return
+        if (manager.getNotificationChannel(CHANNEL_ID) != null) return
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Workout Tracking",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Keeps workout tracking active while the screen is off"
+        }
+        manager.createNotificationChannel(channel)
     }
 }

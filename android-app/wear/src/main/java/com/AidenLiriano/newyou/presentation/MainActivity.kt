@@ -56,14 +56,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
+// App color constants
 val AppBackground = ComposeColor(0xFFE5E0AA)
 val AppGreen      = ComposeColor(0xFF98CD00)
 val AppCard       = ComposeColor(0xFFFFFADC)
 val AppText       = ComposeColor(0xFF1C1C1E)
 val AppRed        = ComposeColor(0xFFEF5350)
 val AppOrange     = ComposeColor(0xFFFFA726)
+val AppDarkGreen  = ComposeColor(0xFF7DB800)
 
-// Custom workout type base ID
 const val CUSTOM_WORKOUT_TYPE_BASE = 100
 
 data class GuidedWorkoutPlan(
@@ -80,10 +81,9 @@ data class WorkoutGoals(
     val targetDistance: Float
 )
 
-// Represents any workout, built-in or custom
 data class WorkoutType(
     val name: String,
-    val typeId: Int,  // 1-8 for built-in, 100+ for custom
+    val typeId: Int,
     val iconRes: Int,
     val isCustom: Boolean = false,
     val trackSteps: Boolean = false,
@@ -93,13 +93,12 @@ data class WorkoutType(
     val trackSpeed: Boolean = false
 )
 
-// Built-in workouts
 val builtInWorkouts = listOf(
-    WorkoutType("Running",    1, R.drawable.ic_running,   trackSteps = true),
-    WorkoutType("Swimming",   2, R.drawable.ic_swimming,  trackLaps = true),
-    WorkoutType("Biking",     3, R.drawable.ic_biking,    trackDistance = true, trackSpeed = true),
-    WorkoutType("Walking",    4, R.drawable.ic_walking,   trackSteps = true),
-    WorkoutType("Hiking",     5, R.drawable.ic_hiking,    trackSteps = true, trackElevation = true),
+    WorkoutType("Running",    1, R.drawable.ic_running,    trackSteps = true),
+    WorkoutType("Swimming",   2, R.drawable.ic_swimming,   trackLaps = true),
+    WorkoutType("Biking",     3, R.drawable.ic_biking,     trackDistance = true, trackSpeed = true),
+    WorkoutType("Walking",    4, R.drawable.ic_walking,    trackSteps = true),
+    WorkoutType("Hiking",     5, R.drawable.ic_hiking,     trackSteps = true, trackElevation = true),
     WorkoutType("Meditation", 6, R.drawable.ic_meditation),
     WorkoutType("Strength",   7, R.drawable.ic_strength),
     WorkoutType("Yoga",       8, R.drawable.ic_yoga)
@@ -118,14 +117,22 @@ val metValues = mapOf(
 
 sealed class Screen {
     object Selection : Screen()
+    data class Countdown(val workout: WorkoutType) : Screen()
     data class ActiveWorkout(val workout: WorkoutType, val activityId: Int) : Screen()
 }
 
 class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListener {
 
-    var pendingActivityId      by mutableStateOf(-1)
-    var pendingGuidedWorkout   by mutableStateOf<GuidedWorkoutPlan?>(null)
-    var customWorkouts         by mutableStateOf<List<WorkoutType>>(emptyList())
+    companion object {
+        var instance: MainActivity? = null
+    }
+
+    var pendingActivityId    by mutableStateOf(-1)
+    var pendingGuidedWorkout by mutableStateOf<GuidedWorkoutPlan?>(null)
+    var pendingAutoStart     by mutableStateOf(false)
+    var customWorkouts       by mutableStateOf<List<WorkoutType>>(emptyList())
+
+    var currentScreen        by mutableStateOf<Screen>(Screen.Selection)
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -136,7 +143,15 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
         super.onCreate(savedInstanceState)
         setTheme(android.R.style.Theme_DeviceDefault)
 
+        instance = this
         WorkoutTrackingService.sensorHelper = SensorManagerHelper(this)
+
+        WearListenerService.pendingGuidedWorkout?.let {
+            pendingGuidedWorkout = it
+        }
+        WearListenerService.pendingCustomWorkouts?.let {
+            receiveCustomWorkouts(it)
+        }
 
         permissionLauncher.launch(
             arrayOf(
@@ -153,13 +168,61 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
 
     override fun onResume() {
         super.onResume()
+        instance = this
         Wearable.getMessageClient(this).addListener(this)
         requestCustomWorkoutsFromPhone()
+
+        if (WearListenerService.pendingAutoStart
+            && pendingGuidedWorkout != null
+            && currentScreen is Screen.Selection) {
+            val workout = builtInWorkouts.find {
+                it.typeId == pendingGuidedWorkout!!.workoutTypeId
+            } ?: customWorkouts.find {
+                it.typeId == pendingGuidedWorkout!!.workoutTypeId
+            }
+            if (workout != null) {
+                currentScreen = Screen.Countdown(workout)
+                WearListenerService.pendingAutoStart = false
+                pendingAutoStart = false
+            }
+        }
     }
 
     override fun onPause() {
         super.onPause()
         Wearable.getMessageClient(this).removeListener(this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (instance === this) instance = null
+    }
+
+    fun receiveCustomWorkouts(data: String) {
+        if (data.isEmpty() || data == "NONE") {
+            customWorkouts = emptyList()
+            return
+        }
+        val parsed = mutableListOf<WorkoutType>()
+        data.split(";").forEach { entry ->
+            val f = entry.split("|")
+            if (f.size >= 8) {
+                val iconIdx = f[1].toIntOrNull() ?: 0
+                val cwId    = f[7].toIntOrNull() ?: 0
+                parsed.add(WorkoutType(
+                    name           = f[0],
+                    typeId         = CUSTOM_WORKOUT_TYPE_BASE + cwId,
+                    iconRes        = iconResources.getOrElse(iconIdx) { R.drawable.ic_running },
+                    isCustom       = true,
+                    trackSteps     = f[2] == "1",
+                    trackDistance  = f[3] == "1",
+                    trackElevation = f[4] == "1",
+                    trackLaps      = f[5] == "1",
+                    trackSpeed     = f[6] == "1"
+                ))
+            }
+        }
+        customWorkouts = parsed
     }
 
     private fun requestCustomWorkoutsFromPhone() {
@@ -169,8 +232,8 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
                     .connectedNodes.await()
                 for (node in nodes) {
                     Wearable.getMessageClient(this@MainActivity)
-                        .sendMessage(node.id, "/request_custom_workouts",
-                            ByteArray(0)).await()
+                        .sendMessage(node.id,
+                            "/request_custom_workouts", ByteArray(0)).await()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -180,11 +243,10 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
         val path = messageEvent.path
-
         when {
             path.startsWith("/activity_id_response/") -> {
-                val realId = path.replace("/activity_id_response/", "").toIntOrNull()
-                if (realId != null) pendingActivityId = realId
+                val id = path.replace("/activity_id_response/", "").toIntOrNull()
+                if (id != null) pendingActivityId = id
             }
             path == "/guided_workout" -> {
                 val data  = String(messageEvent.data)
@@ -194,44 +256,33 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
                     val tierName = parts[1]
                     val goals    = parts[2].split("~")
                     pendingGuidedWorkout = GuidedWorkoutPlan(typeId, tierName, goals)
+
+                    // Auto-start: find the matching workout and go to countdown
+                    val workout = builtInWorkouts.find { it.typeId == typeId }
+                        ?: customWorkouts.find { it.typeId == typeId }
+                    if (workout != null && currentScreen is Screen.Selection) {
+                        currentScreen = Screen.Countdown(workout)
+                    } else {
+                        pendingAutoStart = true
+                    }
                 }
             }
             path == "/custom_workouts_data" -> {
-                // Receive custom workout definitions from phone
-                // Format: name|iconIndex|trackSteps|trackDist|trackElev|trackLaps|trackSpeed|id
-                // Multiple workouts separated by ;
-                val data = String(messageEvent.data)
-                if (data.isNotEmpty() && data != "NONE") {
-                    val parsed = mutableListOf<WorkoutType>()
-                    data.split(";").forEach { entry ->
-                        val f = entry.split("|")
-                        if (f.size >= 8) {
-                            val iconIdx = f[1].toIntOrNull() ?: 0
-                            val cwId    = f[7].toIntOrNull() ?: 0
-                            parsed.add(WorkoutType(
-                                name          = f[0],
-                                typeId        = CUSTOM_WORKOUT_TYPE_BASE + cwId,
-                                iconRes       = iconResources.getOrElse(iconIdx) { R.drawable.ic_running },
-                                isCustom      = true,
-                                trackSteps    = f[2] == "1",
-                                trackDistance = f[3] == "1",
-                                trackElevation = f[4] == "1",
-                                trackLaps     = f[5] == "1",
-                                trackSpeed    = f[6] == "1"
-                            ))
-                        }
-                    }
-                    customWorkouts = parsed
-                } else {
-                    customWorkouts = emptyList()
-                }
+                receiveCustomWorkouts(String(messageEvent.data))
             }
         }
     }
 
-    fun startTrackingService() {
+    fun startTrackingService(
+        trackSteps: Boolean,
+        trackElevation: Boolean,
+        trackGps: Boolean
+    ) {
         val intent = Intent(this, WorkoutTrackingService::class.java)
         intent.action = WorkoutTrackingService.ACTION_START
+        intent.putExtra(WorkoutTrackingService.EXTRA_TRACK_STEPS,     trackSteps)
+        intent.putExtra(WorkoutTrackingService.EXTRA_TRACK_ELEVATION, trackElevation)
+        intent.putExtra(WorkoutTrackingService.EXTRA_TRACK_GPS,       trackGps)
         startForegroundService(intent)
     }
 
@@ -243,8 +294,8 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
 
     fun vibrateShort() {
         val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(VibrationEffect.createOneShot(200,
-            VibrationEffect.DEFAULT_AMPLITUDE))
+        vibrator.vibrate(VibrationEffect.createOneShot(
+            200, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
     fun vibrateLong() {
@@ -299,7 +350,7 @@ fun parseGoals(goals: List<String>): WorkoutGoals {
 
 @Composable
 fun WearApp(activity: MainActivity) {
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Selection) }
+    val currentScreen = activity.currentScreen
 
     Box(
         modifier = Modifier
@@ -312,18 +363,36 @@ fun WearApp(activity: MainActivity) {
                 TimeText()
                 WorkoutSelector(
                     activity = activity,
+                    onCountdownRequested = { workout ->
+                        activity.currentScreen = Screen.Countdown(workout)
+                    },
                     onWorkoutStarted = { workout, activityId ->
-                        currentScreen = Screen.ActiveWorkout(workout, activityId)
+                        activity.currentScreen =
+                            Screen.ActiveWorkout(workout, activityId)
+                    }
+                )
+            }
+            is Screen.Countdown -> {
+                CountdownScreen(
+                    activity = activity,
+                    workout  = screen.workout,
+                    onCountdownComplete = { workout, activityId ->
+                        activity.currentScreen =
+                            Screen.ActiveWorkout(workout, activityId)
+                    },
+                    onCancelled = {
+                        activity.currentScreen = Screen.Selection
+                        activity.pendingGuidedWorkout = null
                     }
                 )
             }
             is Screen.ActiveWorkout -> {
                 ActiveWorkoutScreen(
-                    activity       = activity,
-                    workout        = screen.workout,
-                    activityId     = screen.activityId,
+                    activity         = activity,
+                    workout          = screen.workout,
+                    activityId       = screen.activityId,
                     onWorkoutStopped = {
-                        currentScreen = Screen.Selection
+                        activity.currentScreen = Screen.Selection
                     }
                 )
             }
@@ -331,143 +400,135 @@ fun WearApp(activity: MainActivity) {
     }
 }
 
+// Workout selector screen
 @Composable
 fun WorkoutSelector(
     activity: MainActivity,
+    onCountdownRequested: (WorkoutType) -> Unit,
     onWorkoutStarted: (WorkoutType, Int) -> Unit
 ) {
     val context        = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val guidedWorkout  = activity.pendingGuidedWorkout
     val customWorkouts = activity.customWorkouts
-
-    // Combine built-in and custom workouts
-    val allWorkouts = builtInWorkouts + customWorkouts
+    val allWorkouts    = builtInWorkouts + customWorkouts
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
+        // App title
         Text(
             text = "New You",
             textAlign = TextAlign.Center,
-            color = AppGreen,
-            fontSize = 14.sp,
+            color = AppDarkGreen,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 2.dp)
+            modifier = Modifier.padding(bottom = 4.dp)
         )
 
         if (guidedWorkout != null) {
-            Text(
-                text = "⭐ ${guidedWorkout.tierName}",
-                textAlign = TextAlign.Center,
-                color = AppText,
-                fontSize = 10.sp,
+            Box(
                 modifier = Modifier
-                    .background(AppCard, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
-            )
+                    .background(AppDarkGreen, RoundedCornerShape(20.dp))
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = "⭐ ${guidedWorkout.tierName}",
+                    color = ComposeColor.White,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
             Spacer(modifier = Modifier.height(4.dp))
         }
 
         Text(
-            text = if (guidedWorkout != null) "Start guided workout" else "Select Workout",
+            text = if (guidedWorkout != null)
+                "Guided workout ready" else "Choose a workout",
             textAlign = TextAlign.Center,
-            color = AppText,
-            fontSize = 11.sp,
-            modifier = Modifier.padding(bottom = 6.dp)
+            color = AppText.copy(alpha = 0.7f),
+            fontSize = 12.sp,
+            modifier = Modifier.padding(bottom = 10.dp)
         )
 
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
             items(allWorkouts) { workout ->
-                val isGuided = guidedWorkout?.workoutTypeId == workout.typeId
-                val bgColor  = when {
-                    isGuided        -> AppGreen
-                    workout.isCustom -> ComposeColor(0xFFDDEEFF) // light blue tint for custom
-                    else            -> AppCard
+                val isGuided   = guidedWorkout?.workoutTypeId == workout.typeId
+                val bgColor    = when {
+                    isGuided         -> AppDarkGreen
+                    workout.isCustom -> ComposeColor(0xFFCCE4FF)
+                    else             -> AppCard
+                }
+                val labelColor = when {
+                    isGuided         -> ComposeColor.White
+                    workout.isCustom -> ComposeColor(0xFF1565C0)
+                    else             -> AppText
                 }
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.width(80.dp)
+                    modifier = Modifier.width(76.dp)
                 ) {
                     Button(
                         onClick = {
-                            coroutineScope.launch {
-                                try {
-                                    val nodeClient    = Wearable.getNodeClient(context)
-                                    val messageClient = Wearable.getMessageClient(context)
-                                    val nodes         = nodeClient.connectedNodes.await()
-
-                                    activity.pendingActivityId = -1
-
-                                    for (node in nodes) {
-                                        messageClient.sendMessage(
-                                            node.id,
-                                            "/workout/${workout.typeId}",
-                                            workout.name.toByteArray()
-                                        ).await()
-                                    }
-
-                                    var waited = 0
-                                    while (activity.pendingActivityId == -1 && waited < 5000) {
-                                        delay(100)
-                                        waited += 100
-                                    }
-
-                                    val realActivityId = activity.pendingActivityId
-
-                                    val needsGps = workout.trackDistance || workout.trackSpeed
-                                    WorkoutTrackingService.sensorHelper =
-                                        SensorManagerHelper(context)
-                                    WorkoutTrackingService.sensorHelper?.startTracking(
-                                        trackHeartRate  = true,
-                                        trackSteps      = workout.trackSteps,
-                                        trackElevation  = workout.trackElevation,
-                                        trackGps        = needsGps
-                                    )
-
-                                    activity.startTrackingService()
-                                    onWorkoutStarted(workout, realActivityId)
-
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
+                            if (isGuided) {
+                                // Guided workout tapped — go straight to countdown
+                                onCountdownRequested(workout)
+                            } else {
+                                // Regular workout — launch immediately
+                                coroutineScope.launch {
+                                    launchWorkout(context, activity, workout,
+                                        onWorkoutStarted)
                                 }
                             }
                         },
                         modifier = Modifier
-                            .width(70.dp)
-                            .height(70.dp),
-                        colors = ButtonDefaults.buttonColors(backgroundColor = bgColor)
+                            .size(72.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = bgColor)
                     ) {
                         Image(
                             painter = painterResource(id = workout.iconRes),
                             contentDescription = workout.name,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(44.dp)
                         )
                     }
 
-                    // Label below button
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Workout name label
                     Text(
-                        text = if (workout.name.length > 8)
-                            workout.name.take(7) + "…"
-                        else workout.name,
-                        fontSize = 8.sp,
-                        color = AppText,
+                        text = workout.name,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = labelColor,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 2.dp)
+                        maxLines = 2,
+                        modifier = Modifier.width(76.dp)
                     )
 
-                    // Custom badge
                     if (workout.isCustom) {
                         Text(
                             text = "custom",
-                            fontSize = 7.sp,
+                            fontSize = 8.sp,
                             color = ComposeColor(0xFF1565C0),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    if (isGuided) {
+                        Text(
+                            text = "tap to start",
+                            fontSize = 8.sp,
+                            color = AppDarkGreen,
+                            fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -477,6 +538,168 @@ fun WorkoutSelector(
     }
 }
 
+// Countdown screen — shown before a guided workout starts
+@Composable
+fun CountdownScreen(
+    activity: MainActivity,
+    workout: WorkoutType,
+    onCountdownComplete: (WorkoutType, Int) -> Unit,
+    onCancelled: () -> Unit
+) {
+    val context        = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var countdownValue by remember { mutableStateOf(3) }
+    var isCancelled    by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        // Vibrate to alert the user the countdown is starting
+        activity.vibrateShort()
+
+        while (countdownValue > 0 && !isCancelled) {
+            delay(1000L)
+            if (!isCancelled) {
+                countdownValue--
+                if (countdownValue > 0) activity.vibrateShort()
+            }
+        }
+
+        if (!isCancelled) {
+            // Countdown finished — launch the workout
+            activity.vibrateLong()
+            coroutineScope.launch {
+                launchWorkout(context, activity, workout) { w, id ->
+                    onCountdownComplete(w, id)
+                }
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppBackground)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Workout icon
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .background(AppDarkGreen, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = workout.iconRes),
+                contentDescription = workout.name,
+                modifier = Modifier.size(36.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = workout.name,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = AppText,
+            textAlign = TextAlign.Center
+        )
+
+        Text(
+            text = "Starting in",
+            fontSize = 12.sp,
+            color = AppText.copy(alpha = 0.65f),
+            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+        )
+
+        // Big countdown number
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .background(AppDarkGreen, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = countdownValue.toString(),
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Bold,
+                color = ComposeColor.White
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Cancel button
+        Button(
+            onClick = {
+                isCancelled = true
+                onCancelled()
+            },
+            modifier = Modifier
+                .width(110.dp)
+                .height(36.dp),
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = ComposeColor(0xFFCC2A22))
+        ) {
+            Text(
+                text = "Cancel",
+                fontSize = 13.sp,
+                color = ComposeColor.White,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+// Shared workout launch helper
+private suspend fun launchWorkout(
+    context: Context,
+    activity: MainActivity,
+    workout: WorkoutType,
+    onStarted: (WorkoutType, Int) -> Unit
+) {
+    try {
+        val nodeClient    = Wearable.getNodeClient(context)
+        val messageClient = Wearable.getMessageClient(context)
+        val nodes         = nodeClient.connectedNodes.await()
+
+        activity.pendingActivityId = -1
+
+        for (node in nodes) {
+            messageClient.sendMessage(
+                node.id,
+                "/workout/${workout.typeId}",
+                workout.name.toByteArray()
+            ).await()
+        }
+
+        // Wait for the phone to send back the real activity ID
+        var waited = 0
+        while (activity.pendingActivityId == -1 && waited < 5000) {
+            delay(100)
+            waited += 100
+        }
+
+        val realActivityId = activity.pendingActivityId
+
+        val needsGps = workout.trackDistance || workout.trackSpeed
+        WorkoutTrackingService.sensorHelper = SensorManagerHelper(context)
+
+        activity.startTrackingService(
+            trackSteps     = workout.trackSteps,
+            trackElevation = workout.trackElevation,
+            trackGps       = needsGps
+        )
+
+        onStarted(workout, realActivityId)
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+// Active workout screen
 @Composable
 fun ActiveWorkoutScreen(
     activity: MainActivity,
@@ -497,8 +720,8 @@ fun ActiveWorkoutScreen(
     var liveDistance  by remember { mutableStateOf(0f) }
 
     val guidedWorkout = activity.pendingGuidedWorkout
-    val isGuided = guidedWorkout?.workoutTypeId == workout.typeId
-    val goals    = if (isGuided && guidedWorkout != null)
+    val isGuided      = guidedWorkout?.workoutTypeId == workout.typeId
+    val goals         = if (isGuided && guidedWorkout != null)
         parseGoals(guidedWorkout.goals) else null
 
     var durationMilestoneFired by remember { mutableStateOf(false) }
@@ -506,9 +729,9 @@ fun ActiveWorkoutScreen(
     var calMilestoneFired      by remember { mutableStateOf(false) }
     var distMilestoneFired     by remember { mutableStateOf(false) }
     var workoutCompleteFired   by remember { mutableStateOf(false) }
+    var alertMessage           by remember { mutableStateOf("") }
 
-    var alertMessage by remember { mutableStateOf("") }
-
+    // Timer
     LaunchedEffect(isRunning) {
         while (isRunning) {
             delay(1000L)
@@ -516,6 +739,7 @@ fun ActiveWorkoutScreen(
         }
     }
 
+    // Sensor updates + milestone checks every 3 seconds
     LaunchedEffect(isRunning) {
         while (isRunning) {
             delay(3000L)
@@ -532,29 +756,29 @@ fun ActiveWorkoutScreen(
                     && elapsedSeconds >= goals.targetDurationSeconds / 2) {
                     durationMilestoneFired = true
                     activity.vibrateShort()
-                    alertMessage = "⏱ Halfway through target duration!"
-                    delay(3000L); alertMessage = ""
+                    alertMessage = "⏱ Halfway there!"
+                    delay(2500L); alertMessage = ""
                 }
                 if (!stepsMilestoneFired && goals.targetSteps > 0
                     && liveSteps >= goals.targetSteps) {
                     stepsMilestoneFired = true
                     activity.vibrateShort()
-                    alertMessage = "👟 Step goal reached!"
-                    delay(3000L); alertMessage = ""
+                    alertMessage = "👟 Steps goal reached!"
+                    delay(2500L); alertMessage = ""
                 }
                 if (!calMilestoneFired && goals.targetCalories > 0
                     && liveCalories >= goals.targetCalories) {
                     calMilestoneFired = true
                     activity.vibrateShort()
-                    alertMessage = "🔥 Calorie goal reached!"
-                    delay(3000L); alertMessage = ""
+                    alertMessage = "🔥 Calorie goal!"
+                    delay(2500L); alertMessage = ""
                 }
                 if (!distMilestoneFired && goals.targetDistance > 0
                     && liveDistance >= goals.targetDistance) {
                     distMilestoneFired = true
                     activity.vibrateShort()
-                    alertMessage = "📍 Distance goal reached!"
-                    delay(3000L); alertMessage = ""
+                    alertMessage = "📍 Distance goal!"
+                    delay(2500L); alertMessage = ""
                 }
                 if (!workoutCompleteFired) {
                     val durDone  = goals.targetDurationSeconds <= 0
@@ -566,13 +790,14 @@ fun ActiveWorkoutScreen(
                         workoutCompleteFired = true
                         activity.vibrateLong()
                         alertMessage = "🎉 Workout Complete!"
-                        delay(4000L); alertMessage = ""
+                        delay(3500L); alertMessage = ""
                     }
                 }
             }
         }
     }
 
+    // Phone live updates every 5 seconds
     LaunchedEffect(isRunning) {
         while (isRunning) {
             delay(5000L)
@@ -607,150 +832,175 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    val hours   = elapsedSeconds / 3600
-    val minutes = (elapsedSeconds % 3600) / 60
-    val seconds = elapsedSeconds % 60
+    val hours     = elapsedSeconds / 3600
+    val minutes   = (elapsedSeconds % 3600) / 60
+    val seconds   = elapsedSeconds % 60
     val timerText = String.format("%02d:%02d:%02d", hours, minutes, seconds)
-
-    val showSteps    = workout.trackSteps
-    val showDistance = workout.trackDistance
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(AppBackground)
-            .padding(6.dp),
+            .padding(horizontal = 10.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .background(color = AppGreen, shape = CircleShape),
-            contentAlignment = Alignment.Center
+        // Icon + name row
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 4.dp)
         ) {
-            Image(
-                painter = painterResource(id = workout.iconRes),
-                contentDescription = workout.name,
-                modifier = Modifier.size(28.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(2.dp))
-
-        if (workout.isCustom) {
-            Text(
-                text = "🛠️ Custom",
-                fontSize = 9.sp,
-                color = AppText,
+            Box(
                 modifier = Modifier
-                    .background(AppCard, RoundedCornerShape(6.dp))
-                    .padding(horizontal = 6.dp, vertical = 1.dp)
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-        }
-
-        if (isGuided && guidedWorkout != null) {
+                    .size(36.dp)
+                    .background(AppDarkGreen, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = workout.iconRes),
+                    contentDescription = workout.name,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "⭐ ${guidedWorkout.tierName}",
-                fontSize = 9.sp,
-                color = AppText,
+                text = workout.name,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .background(AppCard, RoundedCornerShape(6.dp))
-                    .padding(horizontal = 6.dp, vertical = 1.dp)
+                color = AppText
             )
-            Spacer(modifier = Modifier.height(2.dp))
         }
 
+        // Guided badge
+        if (isGuided && guidedWorkout != null) {
+            Box(
+                modifier = Modifier
+                    .background(AppDarkGreen, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                    .padding(bottom = 4.dp)
+            ) {
+                Text(
+                    text = "⭐ ${guidedWorkout.tierName}",
+                    fontSize = 9.sp,
+                    color = ComposeColor.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        // Timer
         Text(
             text = timerText,
-            fontSize = 20.sp,
+            fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
-            color = AppText,
-            textAlign = TextAlign.Center
+            color = AppDarkGreen,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(vertical = 4.dp)
         )
 
+        // Alert banner
         if (alertMessage.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = alertMessage,
-                fontSize = 10.sp,
-                color = AppText,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
+            Box(
                 modifier = Modifier
-                    .background(AppGreen, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
+                    .fillMaxWidth()
+                    .background(AppDarkGreen, RoundedCornerShape(10.dp))
+                    .padding(horizontal = 8.dp, vertical = 5.dp)
+                    .padding(bottom = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = alertMessage,
+                    fontSize = 11.sp,
+                    color = ComposeColor.White,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
-
+        // Stats
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            val hrGoal = goals?.targetHeartRate ?: 0
-            StatBox(
-                label = "❤️ HR",
-                value = if (liveHeartRate > 0) "$liveHeartRate bpm" else "-- bpm",
+            val hrGoal  = goals?.targetHeartRate ?: 0
+            val calGoal = goals?.targetCalories  ?: 0
+
+            LargeStatBox(
+                label    = "Heart Rate",
+                value    = if (liveHeartRate > 0)
+                    "$liveHeartRate bpm" else "-- bpm",
                 valueColor = AppRed,
-                goalMet = hrGoal > 0 && liveHeartRate >= hrGoal
+                goalMet  = hrGoal > 0 && liveHeartRate >= hrGoal
             )
-            val calGoal = goals?.targetCalories ?: 0
-            StatBox(
-                label = "🔥 Cal",
-                value = "$liveCalories",
+            LargeStatBox(
+                label    = "Calories",
+                value    = "$liveCalories kcal",
                 valueColor = AppOrange,
-                goalMet = calGoal > 0 && liveCalories >= calGoal
+                goalMet  = calGoal > 0 && liveCalories >= calGoal
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
-
-        if (showSteps || showDistance) {
+        // Steps and/or distance
+        if (workout.trackSteps || workout.trackDistance) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                if (showSteps) {
+                if (workout.trackSteps) {
                     val stepGoal = goals?.targetSteps ?: 0
-                    StatBox(
-                        label = "👟 Steps",
-                        value = "$liveSteps",
-                        valueColor = AppGreen,
-                        goalMet = stepGoal > 0 && liveSteps >= stepGoal
+                    LargeStatBox(
+                        label    = "Steps",
+                        value    = "$liveSteps",
+                        valueColor = AppDarkGreen,
+                        goalMet  = stepGoal > 0 && liveSteps >= stepGoal
                     )
                 }
-                if (showDistance) {
+                if (workout.trackDistance) {
                     val distGoal = goals?.targetDistance ?: 0f
-                    StatBox(
-                        label = "📍 Dist",
-                        value = String.format("%.2f km", liveDistance),
-                        valueColor = AppGreen,
-                        goalMet = distGoal > 0 && liveDistance >= distGoal
+                    LargeStatBox(
+                        label    = "Distance",
+                        value    = String.format("%.2f km", liveDistance),
+                        valueColor = AppDarkGreen,
+                        goalMet  = distGoal > 0 && liveDistance >= distGoal
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(4.dp))
         }
 
+        // Lap counter for swimming
         if (workout.trackLaps) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "Laps: $lapCount", fontSize = 11.sp, color = AppText)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 4.dp)
+            ) {
+                Text(
+                    text = "Laps: $lapCount",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppText
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = { lapCount++ },
-                    modifier = Modifier.width(52.dp).height(24.dp),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = AppGreen)
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(28.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = AppDarkGreen)
                 ) {
-                    Text(text = "+", fontSize = 12.sp, color = AppText)
+                    Text(text = "+ Lap", fontSize = 10.sp,
+                        color = ComposeColor.White,
+                        fontWeight = FontWeight.Bold)
                 }
             }
-            Spacer(modifier = Modifier.height(4.dp))
         }
 
+        // Stop button
         Button(
             onClick = {
                 isRunning = false
@@ -770,7 +1020,7 @@ fun ActiveWorkoutScreen(
                 val elevGain   = sh?.elevationGainMeters ?: 0f
                 val elevLoss   = sh?.elevationLossMeters ?: 0f
                 val hrStart    = sh?.getStartHeartRate() ?: 0
-                val hrEnd      = sh?.getEndHeartRate() ?: 0
+                val hrEnd      = sh?.getEndHeartRate()   ?: 0
 
                 val stopPath = "/workout_stop/" +
                         "${workout.typeId}/$activityId/$elapsedSeconds/" +
@@ -780,7 +1030,8 @@ fun ActiveWorkoutScreen(
 
                 coroutineScope.launch {
                     try {
-                        val nodes = Wearable.getNodeClient(context).connectedNodes.await()
+                        val nodes = Wearable.getNodeClient(context)
+                            .connectedNodes.await()
                         for (node in nodes) {
                             Wearable.getMessageClient(context)
                                 .sendMessage(node.id, stopPath,
@@ -794,14 +1045,15 @@ fun ActiveWorkoutScreen(
                     }
                 }
             },
-            modifier = Modifier.width(90.dp).height(32.dp),
+            modifier = Modifier
+                .width(120.dp)
+                .height(38.dp),
             colors = ButtonDefaults.buttonColors(
-                backgroundColor = ComposeColor(0xFFCC2A22)
-            )
+                backgroundColor = ComposeColor(0xFFCC2A22))
         ) {
             Text(
-                text = "Stop",
-                fontSize = 12.sp,
+                text = "Stop Workout",
+                fontSize = 13.sp,
                 color = ComposeColor.White,
                 fontWeight = FontWeight.Bold
             )
@@ -809,8 +1061,9 @@ fun ActiveWorkoutScreen(
     }
 }
 
+// Enlarged stat box for active workout screen
 @Composable
-fun StatBox(
+fun LargeStatBox(
     label: String,
     value: String,
     valueColor: ComposeColor,
@@ -820,21 +1073,21 @@ fun StatBox(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .background(
-                if (goalMet) AppGreen.copy(alpha = 0.3f) else AppCard,
-                shape = RoundedCornerShape(8.dp)
+                if (goalMet) AppDarkGreen.copy(alpha = 0.25f) else AppCard,
+                shape = RoundedCornerShape(10.dp)
             )
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
         Text(
             text = label + if (goalMet) " ✓" else "",
-            fontSize = 9.sp,
-            color = if (goalMet) AppGreen else AppText.copy(alpha = 0.7f),
+            fontSize = 10.sp,
+            color = if (goalMet) AppDarkGreen else AppText.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
             fontWeight = if (goalMet) FontWeight.Bold else FontWeight.Normal
         )
         Text(
             text = value,
-            fontSize = 11.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             color = valueColor,
             textAlign = TextAlign.Center
